@@ -125,6 +125,64 @@ func (h *HttpWorkerAdapter) Transfer( rw http.ResponseWriter, req *http.Request)
 	return
 }
 
+func (h *HttpWorkerAdapter) CreditFundSchedule( rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("CreditFundSchedule")
+
+	transfer := core.Transfer{}
+	err := json.NewDecoder(req.Body).Decode(&transfer)
+    if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
+        return
+    }
+
+	res, err := h.workerService.CreditFundSchedule(req.Context(), transfer)
+	if err != nil {
+		switch err {
+			case erro.ErrNotFound:
+				rw.WriteHeader(404)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			default:
+				rw.WriteHeader(409)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+		}
+	}
+
+	json.NewEncoder(rw).Encode(res)
+	return
+}
+
+func (h *HttpWorkerAdapter) DebitFundSchedule( rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("DebitFundSchedule")
+
+	transfer := core.Transfer{}
+	err := json.NewDecoder(req.Body).Decode(&transfer)
+    if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
+        return
+    }
+
+	res, err := h.workerService.DebitFundSchedule(req.Context(), transfer)
+	if err != nil {
+		switch err {
+			case erro.ErrNotFound:
+				rw.WriteHeader(404)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			default:
+				rw.WriteHeader(409)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+		}
+	}
+
+	json.NewEncoder(rw).Encode(res)
+	return
+}
+
 func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Get")
 

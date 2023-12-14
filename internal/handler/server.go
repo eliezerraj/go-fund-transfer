@@ -86,6 +86,22 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	)
 	getTransfer.Use(MiddleWareHandlerHeader)
 	
+	CreditFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
+	CreditFund.Handle("/creditFundSchedule", 
+						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transfer:", h.httpAppServer.InfoPod.AvailabilityZone, ".creditFund")), 
+						http.HandlerFunc(httpWorkerAdapter.CreditFundSchedule),
+						),
+	)
+	CreditFund.Use(httpWorkerAdapter.DecoratorDB)
+	
+	DebitFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
+	DebitFund.Handle("/debitFundSchedule", 
+						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transfer:", h.httpAppServer.InfoPod.AvailabilityZone, ".debitFund")), 
+						http.HandlerFunc(httpWorkerAdapter.DebitFundSchedule),
+						),
+	)
+	DebitFund.Use(httpWorkerAdapter.DecoratorDB)
+
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpAppServer.Server.Port),      	
 		Handler:      myRouter,                	          

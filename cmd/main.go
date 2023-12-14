@@ -128,7 +128,7 @@ func init(){
 		}
 		infoPod.AvailabilityZone = response.AvailabilityZone	
 	} else {
-		infoPod.AvailabilityZone = "LOCALHOST_NO_AZ"
+		infoPod.AvailabilityZone = "-"
 	}
 	// Load info pod
 	infoPod.Database = &envDB

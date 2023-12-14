@@ -1,6 +1,7 @@
 package service
 
 import (
+	"os"
 	"time"
 	"context"
 	"errors"
@@ -134,6 +135,146 @@ func (s WorkerService) Get(ctx context.Context, transfer core.Transfer) (*core.T
 	res, err := s.workerRepository.Get(ctx, transfer)
 	if err != nil {
 		return nil, err
+	}
+
+	return res, nil
+}
+
+func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
+	childLogger.Debug().Msg("CrediTFundSchedule")
+
+	_, root := xray.BeginSubsegment(ctx, "Service.CrediTFundSchedule")
+
+	tx, err := s.workerRepository.StartTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+		root.Close(nil)
+	}()
+
+	rest_interface_acc_to, err := s.restapi.GetData(ctx, transfer.AccountIDTo, "/get")
+	if err != nil {
+		return nil, err
+	}
+	var acc_to_parsed core.Transfer
+	err = mapstructure.Decode(rest_interface_acc_to, &acc_to_parsed)
+    if err != nil {
+		childLogger.Error().Err(err).Msg("error parse interface")
+		return nil, errors.New(err.Error())
+    }
+
+	transfer.FkAccountIDFrom 	= acc_to_parsed.ID
+	transfer.FkAccountIDTo 		= acc_to_parsed.ID
+	transfer.Type				= "CREDIT"
+	transfer.Status				= "CREDIT_EVENT_CREATED"
+
+	res, err := s.workerRepository.Transfer(ctx, tx, transfer)
+	if err != nil {
+		return nil, err
+	}
+
+	transfer.ID	= res.ID
+
+	childLogger.Debug().Interface("_X_AMZN_TRACE_ID:",  os.Getenv("X_AMZN_TRACE_ID")).Msg("")
+
+	eventData := core.EventData{&transfer}
+	event := core.Event{
+		EventDate: time.Now(),
+		EventType: "topic.credit",
+		EventData:	&eventData,	
+	}
+	
+	err = s.producerWorker.Producer(ctx, event)
+	if err != nil {
+		return nil, err
+	}
+
+	transfer.Status	= "CREDIT_SCHEDULE"
+
+	childLogger.Debug().Interface("===>transfer:",transfer).Msg("")
+
+	res_update, err := s.workerRepository.Update(ctx, tx, transfer)
+	if err != nil {
+		return nil, err
+	}
+	if res_update == 0 {
+		return nil, erro.ErrUpdate
+	}
+
+	return res, nil
+}
+
+func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
+	childLogger.Debug().Msg("DebitFundSchedule")
+
+	_, root := xray.BeginSubsegment(ctx, "Service.DebitFundSchedule")
+
+	tx, err := s.workerRepository.StartTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+		root.Close(nil)
+	}()
+
+	rest_interface_acc_to, err := s.restapi.GetData(ctx, transfer.AccountIDTo, "/get")
+	if err != nil {
+		return nil, err
+	}
+	var acc_to_parsed core.Transfer
+	err = mapstructure.Decode(rest_interface_acc_to, &acc_to_parsed)
+    if err != nil {
+		childLogger.Error().Err(err).Msg("error parse interface")
+		return nil, errors.New(err.Error())
+    }
+
+	transfer.FkAccountIDFrom 	= acc_to_parsed.ID
+	transfer.FkAccountIDTo 		= acc_to_parsed.ID
+	transfer.Type				= "DEBIT"
+	transfer.Status				= "DEBIT_EVENT_CREATED"
+
+	res, err := s.workerRepository.Transfer(ctx, tx, transfer)
+	if err != nil {
+		return nil, err
+	}
+
+	transfer.ID	= res.ID
+	
+	eventData := core.EventData{&transfer}
+	event := core.Event{
+		EventDate: time.Now(),
+		EventType: "topic.debit",
+		EventData:	&eventData,	
+	}
+	
+	err = s.producerWorker.Producer(ctx, event)
+	if err != nil {
+		return nil, err
+	}
+
+	transfer.Status	= "DEBIT_SCHEDULE"
+
+	childLogger.Debug().Interface("===>transfer:",transfer).Msg("")
+
+	res_update, err := s.workerRepository.Update(ctx, tx, transfer)
+	if err != nil {
+		return nil, err
+	}
+	if res_update == 0 {
+		return nil, erro.ErrUpdate
 	}
 
 	return res, nil
