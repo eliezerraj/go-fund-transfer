@@ -14,7 +14,7 @@ data:
   DB_NAME: "postgres"
   DB_SCHEMA: "public"
   NO_AZ: "true"
-  SERVER_URL_DOMAIN:""
+  SERVER_URL_DOMAIN: "http://svc.go-account.test-a.cluster.local:5000"
   KAFKA_USER: "admin"
   KAFKA_PASSWORD: "admin"
   KAFKA_PROTOCOL: "PLAINTEXT"
