@@ -2,7 +2,13 @@
 
 POC for test purposes.
 
-CRUD a account_statement data.
+CRUD a transfer_moviment
+
+## Diagram
+
+1.1 go-fund-transfer (get:get/AccountID}) == (REST) ==> go-account (service.Get) 
+
+1.2 go-fund-transfer (event:topic.debit) == (KAFKA) ==> go-worker-debit/credit 
 
 ## database
 
@@ -27,4 +33,13 @@ CRUD a account_statement data.
             "account_id_to": "ACC-2"
         }
 
-This endpoint producer a mesage in Kafka (topic.credit)
++ POST /debitFundSchedule
+
+        {
+            "currency": "BRL",
+            "amount": -13.00,
+            "account_id_to": "ACC-2"
+        }
+
++ GET /get/1
+

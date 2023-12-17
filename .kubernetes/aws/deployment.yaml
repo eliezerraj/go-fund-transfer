@@ -35,7 +35,7 @@ spec:
             value: xray-service.amazon-cloudwatch:2000
         envFrom:
         - configMapRef:
-            name: go-credit-cm
+            name: go-fund-transfer-cm
         volumeMounts:
           - mountPath: "/var/pod/secret"
             name: volume-secret
@@ -58,7 +58,7 @@ spec:
             - ALL
         ports:
         - name: http
-          containerPort: 5001
+          containerPort: 5005
           protocol: TCP
         readinessProbe:
             httpGet:

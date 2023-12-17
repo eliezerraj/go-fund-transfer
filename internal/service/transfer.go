@@ -143,7 +143,7 @@ func (s WorkerService) Get(ctx context.Context, transfer core.Transfer) (*core.T
 func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("CrediTFundSchedule")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.CrediTFundSchedule")
+	_, root := xray.BeginSubsegment(ctx, "Service.CreditFundSchedule")
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {

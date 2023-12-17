@@ -66,7 +66,7 @@ func loadLocalEnv(){
 	envKafka.KafkaConfigurations.Protocol = "PLAINTEXT"
 	envKafka.KafkaConfigurations.Mechanisms = "PLAINTEXT"
 
-	envKafka.KafkaConfigurations.Clientid = "GO-REST-BALANCE"
+	envKafka.KafkaConfigurations.Clientid = "GO-FUND-TRANSFER"
 	envKafka.KafkaConfigurations.Brokers1 = "b-1.mskarchtest02.9vkh4b.c3.kafka.us-east-2.amazonaws.com:9092"
 	envKafka.KafkaConfigurations.Brokers2 = "b-2.mskarchtest02.9vkh4b.c3.kafka.us-east-2.amazonaws.com:9092"
 

@@ -16,7 +16,7 @@ import (
 func (w WorkerRepository) Transfer(ctx context.Context, tx *sql.Tx ,transfer core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Transfer")
 
-	_, root := xray.BeginSubsegment(ctx, "SQL.Transfer")
+	_, root := xray.BeginSubsegment(ctx, "Repository.Transfer")
 	defer func() {
 		root.Close(nil)
 	}()
@@ -58,7 +58,7 @@ func (w WorkerRepository) Transfer(ctx context.Context, tx *sql.Tx ,transfer cor
 func (w WorkerRepository) Get(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Get")
 
-	_, root := xray.BeginSubsegment(ctx, "SQL.Get")
+	_, root := xray.BeginSubsegment(ctx, "Repository.Get")
 	defer func() {
 		root.Close(nil)
 	}()
@@ -105,7 +105,7 @@ func (w WorkerRepository) Update(ctx context.Context, tx *sql.Tx, transfer core.
 	childLogger.Debug().Msg("Update")
 	childLogger.Debug().Interface("transfer : ", transfer).Msg("")
 
-	_, root := xray.BeginSubsegment(ctx, "SQL.Update")
+	_, root := xray.BeginSubsegment(ctx, "Repository.Update")
 	defer func() {
 		root.Close(nil)
 	}()
