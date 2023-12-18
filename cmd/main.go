@@ -8,6 +8,7 @@ import(
 	"io/ioutil"
 	"context"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -36,50 +37,21 @@ var(
 	repoDB					postgre.WorkerRepository
 )
 
-// ------------------------------------------------------------
-func loadLocalEnv(){
-	log.Debug().Msg("loadLocalEnv")
-	// LOCAL TEST
-	infoPod.PodName = "go-fund-transfer"
-	infoPod.ApiVersion = "0.0"
-
-	envDB.Host = "127.0.0.1" //"host.docker.internal"
-	envDB.Port = "5432"
-	envDB.Schema = "public"
-	envDB.DatabaseName = "postgres"
-	envDB.Db_timeout = 90
-	envDB.Postgres_Driver = "postgres"
-
-	serverUrlDomain 	= "http://localhost:5000"
-
-	//envDB.User  = "postgres"
-	//envDB.Password  = "pass123"
-
-	server.Port = 5005
-	server.ReadTimeout = 60
-	server.WriteTimeout = 60
-	server.IdleTimeout = 60
-	server.CtxTimeout = 60
-
-	envKafka.KafkaConfigurations.Username = "admin"
-	envKafka.KafkaConfigurations.Password = "admin"
-	envKafka.KafkaConfigurations.Protocol = "PLAINTEXT"
-	envKafka.KafkaConfigurations.Mechanisms = "PLAINTEXT"
-
-	envKafka.KafkaConfigurations.Clientid = "GO-FUND-TRANSFER"
-	envKafka.KafkaConfigurations.Brokers1 = "b-1.mskarchtest02.9vkh4b.c3.kafka.us-east-2.amazonaws.com:9092"
-	envKafka.KafkaConfigurations.Brokers2 = "b-2.mskarchtest02.9vkh4b.c3.kafka.us-east-2.amazonaws.com:9092"
-
-	envKafka.KafkaConfigurations.Partition = 1
-	envKafka.KafkaConfigurations.ReplicationFactor = 1
-}
-// ------------------------------------------------------------
-
 func init(){
 	log.Debug().Msg("init")
 	zerolog.SetGlobalLevel(logLevel)
 	
-	loadLocalEnv()
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Info().Err(err).Msg("No .ENV File !!!!")
+	}
+
+	getEnv()
+
+	server.ReadTimeout = 60
+	server.WriteTimeout = 60
+	server.IdleTimeout = 60
+	server.CtxTimeout = 60
 
 	// Get Database Secrets
 	file_user, err := ioutil.ReadFile("/var/pod/secret/username")
@@ -94,8 +66,7 @@ func init(){
 	}
 	envDB.User = string(file_user)
 	envDB.Password = string(file_pass)
-	
-	getEnv()
+	envDB.Db_timeout = 90
 
 	// Load info pod
 	// Get IP
@@ -132,6 +103,7 @@ func init(){
 	}
 	// Load info pod
 	infoPod.Database = &envDB
+	infoPod.KafkaConfig =&envKafka
 }
 
 func getEnv() {
@@ -160,7 +132,10 @@ func getEnv() {
 	if os.Getenv("DB_SCHEMA") !=  "" {	
 		envDB.Schema = os.Getenv("DB_SCHEMA")
 	}
-
+	if os.Getenv("DB_DRIVER") !=  "" {	
+		envDB.Postgres_Driver = os.Getenv("DB_DRIVER")
+	}
+	
 	if os.Getenv("SERVER_URL_DOMAIN") !=  "" {	
 		serverUrlDomain = os.Getenv("SERVER_URL_DOMAIN")
 	}

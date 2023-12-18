@@ -23,6 +23,7 @@ type InfoPod struct {
 	IPAddress			string `json:"ip_address"`
 	AvailabilityZone 	string `json:"availabilityZone"`
 	Database			*DatabaseRDS
+	KafkaConfig			*KafkaConfig
 }
 
 type Server struct {
