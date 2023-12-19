@@ -16,24 +16,24 @@ import(
 var childLogger = log.With().Str("adapter/restapi", "restapi").Logger()
 
 type RestApiSConfig struct {
-	serverUrlDomain			string
+	ServerUrlDomain			string
+	XApigwId				string
 }
 
-func NewRestApi(serverUrlDomain string) (*RestApiSConfig){
+func NewRestApi(serverUrlDomain string, xApigwId string) (*RestApiSConfig){
 	childLogger.Debug().Msg("*** NewRestApi")
 	return &RestApiSConfig {
-		serverUrlDomain: 	serverUrlDomain,
+		ServerUrlDomain: 	serverUrlDomain,
+		XApigwId: 			xApigwId,
 	}
 }
 
-func (r *RestApiSConfig) GetData(ctx context.Context, id string, path string) (interface{}, error) {
+func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, xApigwId string, path string, id string) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
 
-	domain := r.serverUrlDomain + path +"/" + id
+	domain := serverUrlDomain + path +"/" + id
 
-	childLogger.Debug().Str("domain : ", domain).Msg("GetData")
-
-	data_interface, err := makeGet(ctx, domain, id)
+	data_interface, err := makeGet(ctx, domain, xApigwId ,id)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, errors.New(err.Error())
@@ -42,14 +42,12 @@ func (r *RestApiSConfig) GetData(ctx context.Context, id string, path string) (i
 	return data_interface, nil
 }
 
-func (r *RestApiSConfig) PostData(ctx context.Context, path string ,data interface{}) (interface{}, error) {
+func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, xApigwId string, path string ,data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
 
-	domain := r.serverUrlDomain + path 
+	domain := serverUrlDomain + path 
 
-	childLogger.Debug().Str("domain : ", domain).Msg("PostData")
-
-	data_interface, err := makePost(ctx, domain, data)
+	data_interface, err := makePost(ctx, domain, xApigwId ,data)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, errors.New(err.Error())
@@ -58,11 +56,13 @@ func (r *RestApiSConfig) PostData(ctx context.Context, path string ,data interfa
 	return data_interface, nil
 }
 
-func makeGet(ctx context.Context, url string, id interface{}) (interface{}, error) {
+func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makeGet")
-
 	client := xray.Client(&http.Client{Timeout: time.Second * 29})
 	
+	childLogger.Debug().Str("url : ", url).Msg("")
+	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
@@ -70,6 +70,7 @@ func makeGet(ctx context.Context, url string, id interface{}) (interface{}, erro
 	}
 
 	req.Header.Add("Content-Type", "application/json;charset=UTF-8");
+	req.Header.Add("x-apigw-api-id", xApigwId);
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -102,11 +103,13 @@ func makeGet(ctx context.Context, url string, id interface{}) (interface{}, erro
 	return result, nil
 }
 
-func makePost(ctx context.Context, url string, data interface{}) (interface{}, error) {
+func makePost(ctx context.Context, url string, xApigwId string, data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makePost")
-
 	client := xray.Client(&http.Client{Timeout: time.Second * 29})
 	
+	childLogger.Debug().Str("url : ", url).Msg("")
+	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
+
 	payload := new(bytes.Buffer)
 	json.NewEncoder(payload).Encode(data)
 
@@ -117,6 +120,7 @@ func makePost(ctx context.Context, url string, data interface{}) (interface{}, e
 	}
 
 	req.Header.Add("Content-Type", "application/json;charset=UTF-8");
+	req.Header.Add("x-apigw-api-id", xApigwId);
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {

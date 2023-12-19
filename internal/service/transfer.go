@@ -69,7 +69,7 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (*c
 
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
-	rest_interface_acc_from, err := s.restapi.GetData(ctx, transfer.AccountIDFrom, "/get")
+	rest_interface_acc_from, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId  ,"/get", transfer.AccountIDFrom )
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (*c
 		return nil, errors.New(err.Error())
     }
 
-	rest_interface_acc_to, err := s.restapi.GetData(ctx, transfer.AccountIDTo, "/get")
+	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId , "/get", transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 		root.Close(nil)
 	}()
 
-	rest_interface_acc_to, err := s.restapi.GetData(ctx, transfer.AccountIDTo, "/get")
+	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId , "/get" ,transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +230,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 		root.Close(nil)
 	}()
 
-	rest_interface_acc_to, err := s.restapi.GetData(ctx, transfer.AccountIDTo, "/get")
+	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId , "/get" ,transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}

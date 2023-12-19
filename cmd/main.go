@@ -27,7 +27,7 @@ import(
 var(
 	logLevel 	= 	zerolog.DebugLevel
 	noAZ		=	true // set only if you get to split the xray trace per AZ
-	serverUrlDomain 		string
+	serverUrlDomain, xApigwId 		string
 	infoPod					core.InfoPod
 	envDB	 				core.DatabaseRDS
 	envKafka				core.KafkaConfig
@@ -139,6 +139,9 @@ func getEnv() {
 	if os.Getenv("SERVER_URL_DOMAIN") !=  "" {	
 		serverUrlDomain = os.Getenv("SERVER_URL_DOMAIN")
 	}
+	if os.Getenv("X_APIGW_API_ID") !=  "" {	
+		xApigwId = os.Getenv("X_APIGW_API_ID")
+	}
 
 	if os.Getenv("KAFKA_USER") !=  "" {
 		envKafka.KafkaConfigurations.Username = os.Getenv("KAFKA_USER")
@@ -217,7 +220,7 @@ func main() {
 		log.Error().Err(err).Msg("Erro na abertura do Kafka")
 	}
 	
-	restapi	:= restapi.NewRestApi(serverUrlDomain)
+	restapi	:= restapi.NewRestApi(serverUrlDomain, xApigwId)
 
 	httpAppServerConfig.Server = server
 	repoDB = postgre.NewWorkerRepository(dataBaseHelper)
