@@ -50,6 +50,7 @@ func (w WorkerRepository) Transfer(ctx context.Context, tx *sql.Tx ,transfer cor
 
 	res_transfer := core.Transfer{}
 	res_transfer.ID = id
+	res_transfer.TransferAt = time.Now()
 
 	defer stmt.Close()
 	return &res_transfer , nil
