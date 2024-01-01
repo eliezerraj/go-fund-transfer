@@ -24,6 +24,7 @@ type InfoPod struct {
 	AvailabilityZone 	string `json:"availabilityZone"`
 	Database			*DatabaseRDS
 	KafkaConfig			*KafkaConfig
+	Topic				*Topic
 }
 
 type Server struct {

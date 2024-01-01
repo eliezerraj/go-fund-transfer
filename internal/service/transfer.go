@@ -23,17 +23,20 @@ type WorkerService struct {
 	workerRepository 		*postgre.WorkerRepository
 	restapi					*restapi.RestApiSConfig
 	producerWorker			*event.ProducerWorker
+	topic					*core.Topic
 }
 
 func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
 						restapi				*restapi.RestApiSConfig,
-						producerWorker		*event.ProducerWorker) *WorkerService{
+						producerWorker		*event.ProducerWorker,
+						topic				*core.Topic) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
 		workerRepository:	workerRepository,
 		restapi:			restapi,
 		producerWorker: 	producerWorker,
+		topic:				topic,
 	}
 }
 
@@ -187,7 +190,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 	eventData := core.EventData{&transfer}
 	event := core.Event{
 		EventDate: time.Now(),
-		EventType: "topic.credit",
+		EventType: s.topic.Credit,
 		EventData:	&eventData,	
 	}
 	
@@ -256,7 +259,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 	eventData := core.EventData{&transfer}
 	event := core.Event{
 		EventDate: time.Now(),
-		EventType: "topic.debit",
+		EventType: s.topic.Dedit,
 		EventData:	&eventData,	
 	}
 	

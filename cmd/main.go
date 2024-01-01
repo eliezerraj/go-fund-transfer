@@ -33,6 +33,7 @@ var(
 	envKafka				core.KafkaConfig
 	httpAppServerConfig 	core.HttpAppServer
 	server					core.Server
+	topic					core.Topic
 	dataBaseHelper 			postgre.DatabaseHelper
 	repoDB					postgre.WorkerRepository
 )
@@ -52,6 +53,8 @@ func init(){
 	server.WriteTimeout = 60
 	server.IdleTimeout = 60
 	server.CtxTimeout = 60
+
+	infoPod.Topic = &topic
 
 	// Get Database Secrets
 	file_user, err := ioutil.ReadFile("/var/pod/secret/username")
@@ -177,6 +180,13 @@ func getEnv() {
 		envKafka.KafkaConfigurations.ReplicationFactor = intVar
 	}
 
+	if os.Getenv("TOPIC_CREDIT") !=  "" {
+		topic.Credit = os.Getenv("TOPIC_CREDIT")
+	}
+	if os.Getenv("TOPIC_DEBIT") !=  "" {
+		topic.Dedit = os.Getenv("TOPIC_DEBIT")
+	}
+
 	if os.Getenv("NO_AZ") == "false" {	
 		noAZ = false
 	} else {
@@ -225,7 +235,7 @@ func main() {
 	httpAppServerConfig.Server = server
 	repoDB = postgre.NewWorkerRepository(dataBaseHelper)
 
-	workerService := service.NewWorkerService(&repoDB, restapi, producerWorker)
+	workerService := service.NewWorkerService(&repoDB, restapi, producerWorker, &topic)
 	httpWorkerAdapter := handler.NewHttpWorkerAdapter(workerService)
 
 	httpAppServerConfig.InfoPod = &infoPod

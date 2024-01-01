@@ -36,3 +36,8 @@ type Event struct {
 type EventData struct {
     Transfer   *Transfer    `json:"transfer"`
 }
+
+type Topic struct {
+	Credit  string    `json:"topic_credit"`
+    Dedit   string    `json:"topic_debit"`
+}
