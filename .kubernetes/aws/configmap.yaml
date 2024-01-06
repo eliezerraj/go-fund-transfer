@@ -27,6 +27,6 @@ data:
   KAFKA_BROKER_2: "b-2.mskarchtest02.9vkh4b.c3.kafka.us-east-2.amazonaws.com:9092"
   KAFKA_BROKER_3: ""
   KAFKA_PARTITION: "6"
-  KAFKA_REPLICATION: "1"
+  KAFKA_REPLICATION: "2"
   TOPIC_CREDIT: "topic.credit"
   TOPIC_DEBIT: "topic.debit"
