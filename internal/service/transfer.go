@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"github.com/rs/zerolog/log"
+	"encoding/json"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/go-fund-transfer/internal/core"
@@ -51,7 +52,7 @@ func (s WorkerService) SetSessionVariable(ctx context.Context, userCredential st
 	return res, nil
 }
 
-func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
+func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (interface{}, error){
 	childLogger.Debug().Msg("TransferFund")
 
 	_, root := xray.BeginSubsegment(ctx, "Service.TransferFund")
@@ -72,60 +73,49 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (*c
 
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
-	rest_interface_acc_from, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId  ,"/get", transfer.AccountIDFrom )
+	// Get data from account source credit
+	rest_interface_acc_from, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId  ,"/fundBalanceAccount", transfer.AccountIDFrom )
 	if err != nil {
 		return nil, err
 	}
-	var acc_from_parsed core.Transfer
-	err = mapstructure.Decode(rest_interface_acc_from, &acc_from_parsed)
-    if err != nil {
+	var acc_parsed_from core.AccountBalance
+
+	jsonString, err  := json.Marshal(rest_interface_acc_from)
+	if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
 		return nil, errors.New(err.Error())
     }
+	json.Unmarshal(jsonString, &acc_parsed_from)
 
-	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId , "/get", transfer.AccountIDTo )
+	// Get data from account source debit
+	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId  ,"/fundBalanceAccount", transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}
-	var acc_to_parsed core.Transfer
-	err = mapstructure.Decode(rest_interface_acc_to, &acc_to_parsed)
-    if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
-		return nil, errors.New(err.Error())
-    }
-
-	transfer.FkAccountIDFrom 	= acc_from_parsed.ID
-	transfer.FkAccountIDTo 		= acc_to_parsed.ID
-	transfer.Status				= "CREATED"
-
-	res, err := s.workerRepository.Transfer(ctx, tx, transfer)
-	if err != nil {
-		return nil, err
-	}
-
-	eventData := core.EventData{&transfer}
-	event := core.Event{
-		EventDate: time.Now(),
-		EventType: "topic.transfer",
-		EventData:	&eventData,	
-	}
+	var acc_parsed_to core.AccountBalance
 	
-	err = s.producerWorker.Producer(ctx, event)
+	jsonString, err = json.Marshal(rest_interface_acc_to)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error parse interface")
+		return nil, errors.New(err.Error())
+    }
+	json.Unmarshal(jsonString, &acc_parsed_to)
+
+	transfer.FkAccountIDFrom = acc_parsed_from.FkAccountID
+	transfer.FkAccountIDTo = acc_parsed_to.FkAccountID
+
+	if (acc_parsed_from.Amount < transfer.Amount) {
+		childLogger.Error().Err(err).Msg("error insuficient fund")
+		return nil, erro.ErrOverDraft
+	}
+
+	childLogger.Debug().Interface("transfer:",transfer).Msg("")
+	_, err = s.restapi.PostData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId, "/transferFund", transfer)
 	if err != nil {
 		return nil, err
 	}
 
-	transfer.Status	= "SEND"
-	transfer.ID	= res.ID
-	res_update, err := s.workerRepository.Update(ctx, tx, transfer)
-	if err != nil {
-		return nil, err
-	}
-	if res_update == 0 {
-		return nil, erro.ErrUpdate
-	}
-
-	return res, nil
+	return "sucesso", nil
 }
 
 func (s WorkerService) Get(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){

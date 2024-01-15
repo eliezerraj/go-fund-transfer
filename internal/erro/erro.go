@@ -16,4 +16,5 @@ var (
 	ErrHTTPForbiden		= errors.New("Requisição recusada")
 	ErrInvalidAmount	= errors.New("Valor inválido para esse tipo de transaçao")
 	ErrInvalidId		= errors.New("Id invalido para a pesquisa, deve ser um numerico")
+	ErrOverDraft		= errors.New("Fund Overdraft !!!!")
 )

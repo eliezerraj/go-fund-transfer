@@ -93,7 +93,7 @@ func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (
 			return false, erro.ErrServer
 	}
 
-	result := id
+	var result interface{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error no ErrUnmarshal")

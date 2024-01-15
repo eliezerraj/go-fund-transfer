@@ -115,7 +115,7 @@ func (h *HttpWorkerAdapter) Transfer( rw http.ResponseWriter, req *http.Request)
 				json.NewEncoder(rw).Encode(err.Error())
 				return
 			default:
-				rw.WriteHeader(409)
+				rw.WriteHeader(400)
 				json.NewEncoder(rw).Encode(err.Error())
 				return
 		}
@@ -144,7 +144,7 @@ func (h *HttpWorkerAdapter) CreditFundSchedule( rw http.ResponseWriter, req *htt
 				json.NewEncoder(rw).Encode(err.Error())
 				return
 			default:
-				rw.WriteHeader(409)
+				rw.WriteHeader(400)
 				json.NewEncoder(rw).Encode(err.Error())
 				return
 		}
@@ -173,7 +173,7 @@ func (h *HttpWorkerAdapter) DebitFundSchedule( rw http.ResponseWriter, req *http
 				json.NewEncoder(rw).Encode(err.Error())
 				return
 			default:
-				rw.WriteHeader(409)
+				rw.WriteHeader(400)
 				json.NewEncoder(rw).Encode(err.Error())
 				return
 		}

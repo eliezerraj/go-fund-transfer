@@ -2,13 +2,15 @@
 
 POC for test purposes.
 
-CRUD a transfer_moviment
+CRUD a transfer_moviment.
 
 ## Diagram
 
-1.1 go-fund-transfer (get:get/AccountID}) == (REST) ==> go-account (service.Get) 
+1.1 go-fund-transfer (get:get/AccountID}) == (REST) ==> go-account (service.Get) ==>(event:topic.CREDIT / status:CREDIT_EVENT_CREATED) == (KAFKA)
 
-1.2 go-fund-transfer (event:topic.debit) == (KAFKA) ==> go-worker-debit/credit 
+After
+
+kafka <==(topic.CREDIT)==> go-worker-credit (GROUP-02) (post:/add) ==(REST)==> go-credit(Service.Add) and change the transfer_moviment to CREDIT_DONE
 
 ## database
 
@@ -22,6 +24,7 @@ CRUD a transfer_moviment
         amount              float8 NULL,
         status              varchar(200) NULL
     );
+
 
 ## Endpoints
 
@@ -43,3 +46,12 @@ CRUD a transfer_moviment
 
 + GET /get/1
 
++ POST /transfer
+
+        {
+            "account_id_from": "ACC-1",
+            "account_id_to": "ACC-2",
+            "type_charge": "TRANSFER",
+            "currency": "BRL",
+            "amount": 1.00
+        }
