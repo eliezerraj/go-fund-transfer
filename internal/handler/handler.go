@@ -187,14 +187,12 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Get")
 
 	vars := mux.Vars(req)
-	//varID := vars["id"]
-
 	transfer := core.Transfer{}
 
 	varID, err := strconv.Atoi(vars["id"]) 
-    if err == nil { 
+    if err != nil { 
 		rw.WriteHeader(500)
-		json.NewEncoder(rw).Encode(erro.ErrInvalidId)
+		json.NewEncoder(rw).Encode(erro.ErrInvalidId.Error())
 		return
     } 
   
