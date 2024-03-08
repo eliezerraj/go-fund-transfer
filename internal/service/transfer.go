@@ -198,7 +198,8 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 		return nil, err
 	}
 	if res_update == 0 {
-		return nil, erro.ErrUpdate
+		err = erro.ErrUpdate
+		return nil, err
 	}
 
 	return res, nil
@@ -267,7 +268,8 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 		return nil, err
 	}
 	if res_update == 0 {
-		return nil, erro.ErrUpdate
+		err = erro.ErrUpdate
+		return nil, err
 	}
 
 	return res, nil
