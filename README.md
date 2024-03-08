@@ -1,8 +1,8 @@
 # go-fund-transfer
 
-POC for test purposes.
+POC for test purposes
 
-CRUD a transfer_moviment.
+CRUD a transfer_moviment
 
 ## Diagram
 
