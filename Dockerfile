@@ -3,6 +3,8 @@
 
 FROM golang:1.21 As builder
 
+RUN apt-get update && apt-get install bash && apt-get install -y --no-install-recommends ca-certificates
+
 WORKDIR /app
 COPY . .
 
@@ -13,5 +15,6 @@ FROM alpine
 
 WORKDIR /app
 COPY --from=builder /app/cmd/go-fund-transfer .
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 CMD ["/app/go-fund-transfer"]
