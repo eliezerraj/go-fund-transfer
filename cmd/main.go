@@ -186,6 +186,9 @@ func getEnv() {
 	if os.Getenv("TOPIC_DEBIT") !=  "" {
 		topic.Dedit = os.Getenv("TOPIC_DEBIT")
 	}
+	if os.Getenv("TOPIC_TRANSFER") !=  "" {
+		topic.Transfer = os.Getenv("TOPIC_TRANSFER")
+	}
 
 	if os.Getenv("NO_AZ") == "false" {	
 		noAZ = false
@@ -197,9 +200,9 @@ func getEnv() {
 func main() {
 	log.Debug().Msg("----------------------------------------------------")
 	log.Debug().Msg("main")
-	log.Debug().Interface("",envDB).Msg("")
+	log.Debug().Interface("envDB : ",envDB).Msg("")
 	log.Debug().Msg("----------------------------------------------------")
-	log.Debug().Interface("",server).Msg("")
+	log.Debug().Interface("server: ",server).Msg("")
 	log.Debug().Msg("----------------------------------------------------")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration( server.ReadTimeout ) * time.Second)
@@ -224,7 +227,7 @@ func main() {
 		break
 	}
 	
-	// Setup workload
+	// Setup msk
 	producerWorker, err := event.NewProducerWorker(&envKafka)
 	if err != nil {
 		log.Error().Err(err).Msg("Erro na abertura do Kafka")

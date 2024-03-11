@@ -38,6 +38,7 @@ type EventData struct {
 }
 
 type Topic struct {
-	Credit  string    `json:"topic_credit"`
-    Dedit   string    `json:"topic_debit"`
+	Credit     string    `json:"topic_credit"`
+    Dedit      string    `json:"topic_debit"`
+    Transfer   string    `json:"topic_transfer"`
 }

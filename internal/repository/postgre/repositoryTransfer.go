@@ -15,6 +15,7 @@ import (
 
 func (w WorkerRepository) Transfer(ctx context.Context, tx *sql.Tx ,transfer core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Transfer")
+	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
 	_, root := xray.BeginSubsegment(ctx, "Repository.Add.TransferMoviment")
 	defer func() {

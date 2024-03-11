@@ -210,3 +210,32 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(rw).Encode(res)
 	return
 }
+
+func (h *HttpWorkerAdapter) TransferViaEvent( rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("TransferViaEvent")
+
+	transfer := core.Transfer{}
+	err := json.NewDecoder(req.Body).Decode(&transfer)
+    if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
+        return
+    }
+
+	res, err := h.workerService.TransferViaEvent(req.Context(), transfer)
+	if err != nil {
+		switch err {
+			case erro.ErrNotFound:
+				rw.WriteHeader(404)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			default:
+				rw.WriteHeader(400)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+		}
+	}
+
+	json.NewEncoder(rw).Encode(res)
+	return
+}

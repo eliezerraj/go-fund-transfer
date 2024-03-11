@@ -101,6 +101,14 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	)
 	DebitFund.Use(httpWorkerAdapter.DecoratorDB)
 
+	transferViaEvent := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
+	transferViaEvent.Handle("/transferViaEvent", 
+						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transferViaEvent:", h.httpAppServer.InfoPod.AvailabilityZone, ".add")), 
+						http.HandlerFunc(httpWorkerAdapter.TransferViaEvent),
+						),
+	)
+	transferViaEvent.Use(httpWorkerAdapter.DecoratorDB)
+	
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpAppServer.Server.Port),      	
 		Handler:      myRouter,                	          

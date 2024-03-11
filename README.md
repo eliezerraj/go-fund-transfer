@@ -8,7 +8,7 @@ CRUD a transfer_moviment
 
 1.1 go-fund-transfer (get:get/AccountID}) == (REST) ==> go-account (service.Get) ==>(event:topic.CREDIT / status:CREDIT_EVENT_CREATED) == (KAFKA)
 
-After
+The service go-worker-credit was on charge of to consume the event and change the status to CREDIT_DONE
 
 kafka <==(topic.CREDIT)==> go-worker-credit (GROUP-02) (post:/add) ==(REST)==> go-credit(Service.Add) and change the transfer_moviment to CREDIT_DONE
 
@@ -29,11 +29,11 @@ kafka <==(topic.CREDIT)==> go-worker-credit (GROUP-02) (post:/add) ==(REST)==> g
 ## Endpoints
 
 + POST /creditFundSchedule
-
         {
             "currency": "BRL",
-            "amount": 13.00,
-            "account_id_to": "ACC-2"
+            "amount": 1.00,
+            "type_charge": "CREDIT",
+            "account_id_to": "ACC-5"
         }
 
 + POST /debitFundSchedule
@@ -41,6 +41,7 @@ kafka <==(topic.CREDIT)==> go-worker-credit (GROUP-02) (post:/add) ==(REST)==> g
         {
             "currency": "BRL",
             "amount": -13.00,
+            "type_charge": "DEBIT",
             "account_id_to": "ACC-2"
         }
 
