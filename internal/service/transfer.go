@@ -1,7 +1,6 @@
 package service
 
 import (
-//	"os"
 	"time"
 	"context"
 	"errors"
@@ -22,26 +21,30 @@ var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
 	workerRepository 		*postgre.WorkerRepository
-	restapi					*restapi.RestApiSConfig
+	restEndpoint			*core.RestEndpoint
+	restApiService			*restapi.RestApiService
 	producerWorker			*event.ProducerWorker
 	topic					*core.Topic
 }
 
 func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
-						restapi				*restapi.RestApiSConfig,
+						restEndpoint		*core.RestEndpoint,
+						restApiService		*restapi.RestApiService,
 						producerWorker		*event.ProducerWorker,
 						topic				*core.Topic) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
 		workerRepository:	workerRepository,
-		restapi:			restapi,
+		restEndpoint:		restEndpoint,
+		restApiService:		restApiService,
 		producerWorker: 	producerWorker,
 		topic:				topic,
 	}
 }
 
-func (s WorkerService) SetSessionVariable(ctx context.Context, userCredential string) (bool, error){
+func (s WorkerService) SetSessionVariable(	ctx context.Context, 
+											userCredential string) (bool, error){
 	childLogger.Debug().Msg("SetSessionVariable")
 
 	res, err := s.workerRepository.SetSessionVariable(ctx, userCredential)
@@ -74,7 +77,11 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
 	// Get data from account source credit
-	rest_interface_acc_from, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId  ,"/fundBalanceAccount", transfer.AccountIDFrom )
+	rest_interface_acc_from, err := s.restApiService.GetData(ctx, 
+															s.restEndpoint.ServiceUrlDomain, 
+															s.restEndpoint.XApigwId,
+															"/fundBalanceAccount", 
+															transfer.AccountIDFrom )
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +95,11 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	json.Unmarshal(jsonString, &acc_parsed_from)
 
 	// Get data from account source debit
-	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId  ,"/fundBalanceAccount", transfer.AccountIDTo )
+	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
+															s.restEndpoint.ServiceUrlDomain, 
+															s.restEndpoint.XApigwId,
+															"/fundBalanceAccount", 
+															transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +121,11 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	}
 
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
-	_, err = s.restapi.PostData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId, "/transferFund", transfer)
+	_, err = s.restApiService.PostData(ctx, 
+										s.restEndpoint.ServiceUrlDomain, 
+										s.restEndpoint.XApigwId, 
+										"/transferFund", 
+										transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +168,11 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 	}()
 
 	// Get account data
-	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId , "/get" ,transfer.AccountIDTo )
+	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
+															s.restEndpoint.ServiceUrlDomain, 
+															s.restEndpoint.XApigwId, 
+															"/get",
+															transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}
@@ -176,6 +195,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 
 	// Send data to Kafka
 	transfer.ID	= res.ID
+	transfer.TransferAt = res.TransferAt
 	eventData := core.EventData{&transfer}
 	event := core.Event{
 		Key: transfer.AccountIDTo,
@@ -202,7 +222,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 		return nil, err
 	}
 
-	return res, nil
+	return &transfer, nil
 }
 
 func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
@@ -225,7 +245,11 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 	}()
 
 	// Get account data
-	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId , "/get" ,transfer.AccountIDTo )
+	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
+													s.restEndpoint.ServiceUrlDomain, 
+													s.restEndpoint.XApigwId, 
+													"/get",
+													transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +272,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 
 	// Send data to Kafka
 	transfer.ID	= res.ID
+	transfer.TransferAt = res.TransferAt
 	eventData := core.EventData{&transfer}
 	event := core.Event{
 		Key: transfer.AccountIDTo,
@@ -274,7 +299,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 		return nil, err
 	}
 
-	return res, nil
+	return &transfer, nil
 }
 
 func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Transfer) (interface{}, error){
@@ -298,7 +323,11 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 	}()
 
 	// Get data from account source credit
-	rest_interface_acc_from, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId  ,"/fundBalanceAccount", transfer.AccountIDFrom )
+	rest_interface_acc_from, err := s.restApiService.GetData(	ctx, 
+																s.restEndpoint.ServiceUrlDomain, 
+																s.restEndpoint.XApigwId, 
+																"/fundBalanceAccount", 
+																transfer.AccountIDFrom )
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +341,11 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 	json.Unmarshal(jsonString, &acc_parsed_from)
 
 	// Get data from account source debit
-	rest_interface_acc_to, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain , s.restapi.XApigwId  ,"/fundBalanceAccount", transfer.AccountIDTo )
+	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
+															s.restEndpoint.ServiceUrlDomain, 
+															s.restEndpoint.XApigwId, 
+															"/fundBalanceAccount", 
+															transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}

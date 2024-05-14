@@ -13,22 +13,24 @@ import(
 	"github.com/aws/aws-xray-sdk-go/xray"
 )
 
-var childLogger = log.With().Str("adapter/restapi", "restapi").Logger()
+var childLogger = log.With().Str("adapter/restapi", "restApiService").Logger()
+//----------------------------------------------------
+type RestApiService struct {
 
-type RestApiSConfig struct {
-	ServerUrlDomain			string
-	XApigwId				string
 }
 
-func NewRestApi(serverUrlDomain string, xApigwId string) (*RestApiSConfig){
-	childLogger.Debug().Msg("*** NewRestApi")
-	return &RestApiSConfig {
-		ServerUrlDomain: 	serverUrlDomain,
-		XApigwId: 			xApigwId,
+func NewRestApiService() (*RestApiService){
+	childLogger.Debug().Msg("*** NewRestApiService")
+	
+	return &RestApiService {
 	}
 }
-
-func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, xApigwId string, path string, id string) (interface{}, error) {
+//----------------------------------------------------
+func (r *RestApiService) GetData(ctx context.Context, 
+								serverUrlDomain string, 
+								xApigwId string, 
+								path string, 
+								id string) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
 
 	domain := serverUrlDomain + path +"/" + id
@@ -42,7 +44,11 @@ func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, xA
 	return data_interface, nil
 }
 
-func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, xApigwId string, path string ,data interface{}) (interface{}, error) {
+func (r *RestApiService) PostData(ctx context.Context, 
+								serverUrlDomain string, 
+								xApigwId string, 
+								path string,
+								data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
 
 	domain := serverUrlDomain + path 
@@ -56,7 +62,10 @@ func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, x
 	return data_interface, nil
 }
 
-func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (interface{}, error) {
+func makeGet(	ctx context.Context, 
+				url string, 
+				xApigwId string, 
+				id interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makeGet")
 	client := xray.Client(&http.Client{Timeout: time.Second * 29})
 	
@@ -103,7 +112,10 @@ func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (
 	return result, nil
 }
 
-func makePost(ctx context.Context, url string, xApigwId string, data interface{}) (interface{}, error) {
+func makePost(	ctx context.Context, 
+				url string, 
+				xApigwId string, 
+				data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makePost")
 	client := xray.Client(&http.Client{Timeout: time.Second * 29})
 	
