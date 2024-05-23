@@ -67,7 +67,6 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 
 	header := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     header.HandleFunc("/header", httpWorkerAdapter.Header)
-	header.Use(MiddleWareHandlerHeader)
 
 	transferFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	transferFund.Handle("/transfer", 
@@ -83,7 +82,6 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 						http.HandlerFunc(httpWorkerAdapter.Get),
 						),
 	)
-	getTransfer.Use(MiddleWareHandlerHeader)
 	
 	CreditFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	CreditFund.Handle("/creditFundSchedule", 

@@ -6,7 +6,7 @@ metadata:
   labels:
     app: *app-name
 data:
-  API_VERSION: "1.1"
+  API_VERSION: "2.1"
   POD_NAME: "go-fund-transfer.k8"
   PORT: "5005"
   DB_HOST: "rds-proxy-db-arch.proxy-couoacqalfwt.us-east-2.rds.amazonaws.com"
@@ -20,12 +20,12 @@ data:
   X_APIGW_API_ID: "129t4y8eoj"
   KAFKA_USER: "admin"
   KAFKA_PASSWORD: "admin"
-  KAFKA_PROTOCOL: "PLAINTEXT"
-  KAFKA_MECHANISM: "PLAINTEXT"
+  KAFKA_PROTOCOL: "SASL_SSL"
+  KAFKA_MECHANISM: "SCRAM-SHA-512"
   KAFKA_CLIENT_ID: "GO-FUND-TRANSFER"
-  KAFKA_BROKER_1: "b-1.mskarchtest03.p70t1p.c6.kafka.us-east-2.amazonaws.com:9092"
-  KAFKA_BROKER_2: "b-2.mskarchtest03.p70t1p.c6.kafka.us-east-2.amazonaws.com:9092"
-  KAFKA_BROKER_3: "b-3.mskarchtest03.p70t1p.c6.kafka.us-east-2.amazonaws.com:9092"
+  KAFKA_BROKER_1: "b-1.mskarchtest03.p70t1p.c6.kafka.us-east-2.amazonaws.com:9096"
+  KAFKA_BROKER_2: "b-2.mskarchtest03.p70t1p.c6.kafka.us-east-2.amazonaws.com:9096"
+  KAFKA_BROKER_3: "b-3.mskarchtest03.p70t1p.c6.kafka.us-east-2.amazonaws.com:9096"
   KAFKA_PARTITION: "3"
   KAFKA_REPLICATION: "2"
   TOPIC_CREDIT: "topic.credit.01"
