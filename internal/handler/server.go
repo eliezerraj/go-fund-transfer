@@ -9,14 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 	"context"
-	"fmt"
 
 	"github.com/gorilla/mux"
 
 	"github.com/go-fund-transfer/internal/service"
 	"github.com/go-fund-transfer/internal/core"
-	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/go-fund-transfer/internal/lib"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/contrib/propagators/aws/xray"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 //-------------------------------------------------------
 type HttpWorkerAdapter struct {
@@ -45,7 +47,19 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 										httpWorkerAdapter *HttpWorkerAdapter,
 										appServer *core.AppServer) {
 	childLogger.Info().Msg("StartHttpAppServer")
-		
+	// ---------------------- OTEL ---------------
+	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", appServer.ConfigOTEL.OtelExportEndpoint).Msg("")
+	
+	tp := lib.NewTracerProvider(ctx, appServer.ConfigOTEL, appServer.InfoPod)
+	defer func() { 
+		err := tp.Shutdown(ctx)
+		if err != nil{
+			childLogger.Error().Err(err).Msg("Erro closing OTEL tracer !!!")
+		}
+	}()
+	otel.SetTextMapPropagator(xray.Propagator{})
+	otel.SetTracerProvider(tp)
+
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.Use(MiddleWareHandlerHeader)
 
@@ -67,46 +81,37 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 
 	header := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     header.HandleFunc("/header", httpWorkerAdapter.Header)
+	header.Use(otelmux.Middleware("go-fund-transfer"))
 
 	transferFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	transferFund.Handle("/transfer", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transfer:", appServer.InfoPod.AvailabilityZone, ".add")), 
-						http.HandlerFunc(httpWorkerAdapter.Transfer),
-						),
-	)
+						http.HandlerFunc(httpWorkerAdapter.Transfer),)
 	transferFund.Use(httpWorkerAdapter.DecoratorDB)
+	transferFund.Use(otelmux.Middleware("go-fund-transfer"))
 
 	getTransfer := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
 	getTransfer.Handle("/get/{id}", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transfer:", appServer.InfoPod.AvailabilityZone, ".get")),
-						http.HandlerFunc(httpWorkerAdapter.Get),
-						),
-	)
-	
+						http.HandlerFunc(httpWorkerAdapter.Get),)
+	getTransfer.Use(otelmux.Middleware("go-fund-transfer"))
+
 	CreditFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-	CreditFund.Handle("/creditFundSchedule", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transfer:", appServer.InfoPod.AvailabilityZone, ".creditFund")), 
-						http.HandlerFunc(httpWorkerAdapter.CreditFundSchedule),
-						),
-	)
+	CreditFund.Handle("/creditFundSchedule",  
+						http.HandlerFunc(httpWorkerAdapter.CreditFundSchedule),)
 	CreditFund.Use(httpWorkerAdapter.DecoratorDB)
-	
+	CreditFund.Use(otelmux.Middleware("go-fund-transfer"))
+
 	DebitFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	DebitFund.Handle("/debitFundSchedule", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transfer:", appServer.InfoPod.AvailabilityZone, ".debitFund")), 
-						http.HandlerFunc(httpWorkerAdapter.DebitFundSchedule),
-						),
-	)
+						http.HandlerFunc(httpWorkerAdapter.DebitFundSchedule),)
 	DebitFund.Use(httpWorkerAdapter.DecoratorDB)
+	DebitFund.Use(otelmux.Middleware("go-fund-transfer"))
 
 	transferViaEvent := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	transferViaEvent.Handle("/transferViaEvent", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transferViaEvent:", appServer.InfoPod.AvailabilityZone, ".add")), 
-						http.HandlerFunc(httpWorkerAdapter.TransferViaEvent),
-						),
-	)
+						http.HandlerFunc(httpWorkerAdapter.TransferViaEvent),)
 	transferViaEvent.Use(httpWorkerAdapter.DecoratorDB)
-	
+	transferViaEvent.Use(otelmux.Middleware("go-fund-transfer"))
+
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpServer.Port),      	
 		Handler:      myRouter,                	          

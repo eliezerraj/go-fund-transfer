@@ -31,3 +31,4 @@ data:
   TOPIC_CREDIT: "topic.credit.01"
   TOPIC_DEBIT: "topic.debit.01"
   TOPIC_TRANSFER: "topic.transfer.01"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-01-xray-collector.default.svc.cluster.local:4317"

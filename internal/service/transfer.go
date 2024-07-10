@@ -13,8 +13,7 @@ import (
 	"github.com/go-fund-transfer/internal/adapter/restapi"
 	"github.com/go-fund-transfer/internal/repository/postgre"
 	"github.com/go-fund-transfer/internal/adapter/event"
-	"github.com/aws/aws-xray-sdk-go/xray"
-
+	"github.com/go-fund-transfer/internal/lib"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
@@ -58,7 +57,7 @@ func (s WorkerService) SetSessionVariable(	ctx context.Context,
 func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (interface{}, error){
 	childLogger.Debug().Msg("TransferFund")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.TransferFund")
+	span := lib.Span(ctx, "service.Transfer")	
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
@@ -71,16 +70,16 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 		} else {
 			tx.Commit()
 		}
-		root.Close(nil)
+		defer span.End()
 	}()
 
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
 	// Get data from account source credit
+	urlDomain := s.restEndpoint.ServiceUrlDomain + "/fundBalanceAccount/"  + transfer.AccountIDFrom
 	rest_interface_acc_from, err := s.restApiService.GetData(ctx, 
-															s.restEndpoint.ServiceUrlDomain, 
+															urlDomain, 
 															s.restEndpoint.XApigwId,
-															"/fundBalanceAccount", 
 															transfer.AccountIDFrom )
 	if err != nil {
 		return nil, err
@@ -95,10 +94,10 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	json.Unmarshal(jsonString, &acc_parsed_from)
 
 	// Get data from account source debit
+	urlDomain = s.restEndpoint.ServiceUrlDomain + "/fundBalanceAccount/"  + transfer.AccountIDTo
 	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
-															s.restEndpoint.ServiceUrlDomain, 
+															urlDomain, 
 															s.restEndpoint.XApigwId,
-															"/fundBalanceAccount", 
 															transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
@@ -121,10 +120,10 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	}
 
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
+	urlDomain = s.restEndpoint.ServiceUrlDomain + "/transferFund"
 	_, err = s.restApiService.PostData(ctx, 
-										s.restEndpoint.ServiceUrlDomain, 
+										urlDomain, 
 										s.restEndpoint.XApigwId, 
-										"/transferFund", 
 										transfer)
 	if err != nil {
 		return nil, err
@@ -137,8 +136,8 @@ func (s WorkerService) Get(ctx context.Context, transfer core.Transfer) (*core.T
 	childLogger.Debug().Msg("Get")
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 	
-	_, root := xray.BeginSubsegment(ctx, "Service.transfer")
-	defer root.Close(nil)
+	span := lib.Span(ctx, "service.Get")
+	defer span.End()
 
 	res, err := s.workerRepository.Get(ctx, transfer)
 	if err != nil {
@@ -151,7 +150,7 @@ func (s WorkerService) Get(ctx context.Context, transfer core.Transfer) (*core.T
 func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("CrediTFundSchedule")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.CreditFundSchedule")
+	span := lib.Span(ctx, "service.CreditFundSchedule")
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
@@ -164,14 +163,14 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 		} else {
 			tx.Commit()
 		}
-		root.Close(nil)
+		defer span.End()
 	}()
 
 	// Get account data
+	urlDomain := s.restEndpoint.ServiceUrlDomain + "/get/"  + transfer.AccountIDTo
 	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
-															s.restEndpoint.ServiceUrlDomain, 
+															urlDomain, 
 															s.restEndpoint.XApigwId, 
-															"/get",
 															transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
@@ -228,7 +227,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("DebitFundSchedule")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.DebitFundSchedule")
+	span := lib.Span(ctx, "service.DebitFundSchedule")
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
@@ -241,15 +240,15 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 		} else {
 			tx.Commit()
 		}
-		root.Close(nil)
+		defer span.End()
 	}()
 
 	// Get account data
-	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
-													s.restEndpoint.ServiceUrlDomain, 
-													s.restEndpoint.XApigwId, 
-													"/get",
-													transfer.AccountIDTo )
+	urlDomain := s.restEndpoint.ServiceUrlDomain + "/get/"  + transfer.AccountIDTo
+	rest_interface_acc_to, err := s.restApiService.GetData(	ctx, 
+															urlDomain, 
+															s.restEndpoint.XApigwId, 
+															transfer.AccountIDTo )
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +305,7 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 	childLogger.Debug().Msg("TransferViaEvent")
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.TransferViaEvent")
+	span := lib.Span(ctx, "service.TransferViaEvent")
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
@@ -319,14 +318,14 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 		} else {
 			tx.Commit()
 		}
-		root.Close(nil)
+		defer span.End()
 	}()
 
 	// Get data from account source credit
+	urlDomain := s.restEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
 	rest_interface_acc_from, err := s.restApiService.GetData(	ctx, 
-																s.restEndpoint.ServiceUrlDomain, 
+																urlDomain, 
 																s.restEndpoint.XApigwId, 
-																"/fundBalanceAccount", 
 																transfer.AccountIDFrom )
 	if err != nil {
 		return nil, err
@@ -341,10 +340,10 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 	json.Unmarshal(jsonString, &acc_parsed_from)
 
 	// Get data from account source debit
-	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
-															s.restEndpoint.ServiceUrlDomain, 
+	urlDomain = s.restEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
+	rest_interface_acc_to, err := s.restApiService.GetData(	ctx, 
+															urlDomain, 
 															s.restEndpoint.XApigwId, 
-															"/fundBalanceAccount", 
 															transfer.AccountIDTo )
 	if err != nil {
 		return nil, err

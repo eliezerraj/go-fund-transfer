@@ -9,18 +9,15 @@ import (
 	"database/sql"
 
 	"github.com/go-fund-transfer/internal/core"
-	"github.com/aws/aws-xray-sdk-go/xray"
-
+	"github.com/go-fund-transfer/internal/lib"
 )
 
 func (w WorkerRepository) Transfer(ctx context.Context, tx *sql.Tx ,transfer core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Transfer")
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.Add.TransferMoviment")
-	defer func() {
-		root.Close(nil)
-	}()
+	span := lib.Span(ctx, "repo.Transfer")	
+    defer span.End()
 
 	stmt, err := tx.Prepare(`INSERT INTO transfer_moviment ( 	fk_account_id_from, 
 																fk_account_id_to,
@@ -60,10 +57,8 @@ func (w WorkerRepository) Transfer(ctx context.Context, tx *sql.Tx ,transfer cor
 func (w WorkerRepository) Get(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Get")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.Get.TransferMoviment")
-	defer func() {
-		root.Close(nil)
-	}()
+	span := lib.Span(ctx, "repo.Get")	
+    defer span.End()
 
 	client:= w.databaseHelper.GetConnection()
 	
@@ -107,10 +102,8 @@ func (w WorkerRepository) Update(ctx context.Context, tx *sql.Tx, transfer core.
 	childLogger.Debug().Msg("Update")
 	childLogger.Debug().Interface("transfer : ", transfer).Msg("")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.Update.TransferMoviment")
-	defer func() {
-		root.Close(nil)
-	}()
+	span := lib.Span(ctx, "repo.Update")	
+    defer span.End()
 
 	stmt, err := tx.Prepare(`Update transfer_moviment
 									set status = $2
