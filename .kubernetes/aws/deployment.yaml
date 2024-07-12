@@ -29,9 +29,6 @@ spec:
       containers:
       - name: *app-name
         image: 908671954593.dkr.ecr.us-east-2.amazonaws.com/go-fund-transfer:latest
-        env:
-          - name: AWS_XRAY_DAEMON_ADDRESS
-            value: xray-service.amazon-cloudwatch:2000
         envFrom:
         - configMapRef:
             name: go-fund-transfer-cm
@@ -41,11 +38,11 @@ spec:
             readOnly: true
         resources:
            requests:
-             cpu: 100m
+             cpu: 10m
              memory: 50Mi
            limits:
-             cpu: 200m
-             memory: 150Mi
+             cpu: 100m
+             memory: 100Mi
         securityContext:
           seccompProfile:
             type: RuntimeDefault

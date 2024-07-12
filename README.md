@@ -64,3 +64,13 @@ kafka <==(topic.CREDIT)==> go-worker-credit (GROUP-02) (post:/add) ==(REST)==> g
             "currency": "BRL",
             "amount": 1.00
         }
+
++ POST /transferViaEvent
+
+    {
+        "account_id_from": "ACC-1",
+        "account_id_to": "ACC-2",
+        "type_charge": "TRANSFER",
+        "currency": "BRL",
+        "amount": 5.00
+    }

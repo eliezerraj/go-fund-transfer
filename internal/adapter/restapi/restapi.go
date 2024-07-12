@@ -31,6 +31,9 @@ func (r *RestApiService) GetData(ctx context.Context,
 								xApigwId string, 
 								data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
+	
+	span := lib.Span(ctx, "adapter.GetData")	
+    defer span.End()
 
 	data_interface, err := makeGet(ctx, urlDomain, xApigwId ,data)
 	if err != nil {
@@ -46,6 +49,9 @@ func (r *RestApiService) PostData(ctx context.Context,
 								xApigwId string, 
 								data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
+
+	span := lib.Span(ctx, "adapter.PostData")	
+    defer span.End()
 
 	data_interface, err := makePost(ctx, urlDomain, xApigwId ,data)
 	if err != nil {

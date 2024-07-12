@@ -11,9 +11,7 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-fund-transfer/internal/core"
-
-	"github.com/aws/aws-xray-sdk-go/xray"
-
+	"github.com/go-fund-transfer/internal/lib"
 )
 
 var childLogger = log.With().Str("event", "msk").Logger()
@@ -65,11 +63,9 @@ func hash(s string) int {
 func (p *ProducerWorker) Producer(ctx context.Context, event core.Event) error{
 	childLogger.Debug().Msg("Producer")
 
-	_, root := xray.BeginSubsegment(ctx, "Event.Producer")
-	defer func() {
-		root.Close(nil)
-	}()
-
+	span := lib.Span(ctx, "adapter.Producer")	
+    defer span.End()
+	
 	rand.Seed(time.Now().UnixNano())
 	min := 1
 	max := 3
