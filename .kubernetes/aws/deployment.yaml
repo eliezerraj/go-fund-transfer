@@ -38,11 +38,11 @@ spec:
             readOnly: true
         resources:
            requests:
-             cpu: 10m
-             memory: 50Mi
-           limits:
              cpu: 100m
              memory: 100Mi
+           limits:
+             cpu: 400m
+             memory: 200Mi
         securityContext:
           seccompProfile:
             type: RuntimeDefault
