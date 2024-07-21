@@ -12,7 +12,7 @@ import(
 	"github.com/go-fund-transfer/internal/handler"
 	"github.com/go-fund-transfer/internal/core"
 	"github.com/go-fund-transfer/internal/service"
-	"github.com/go-fund-transfer/internal/repository/postgre"
+	"github.com/go-fund-transfer/internal/repository/pg"
 	"github.com/go-fund-transfer/internal/adapter/restapi"
 	
 )
@@ -52,10 +52,10 @@ func main() {
 
 	// Open Database
 	count := 1
-	var databaseHelper	postgre.DatabaseHelper
+	var databasePG	pg.DatabasePG
 	var err error
 	for {
-		databaseHelper, err = postgre.NewDatabaseHelper(ctx, appServer.Database)
+		databasePG, err = pg.NewDatabasePGServer(ctx, appServer.Database)
 		if err != nil {
 			if count < 3 {
 				log.Error().Err(err).Msg("Erro open Database... trying again !!")
@@ -70,17 +70,16 @@ func main() {
 		break
 	}
 	
-	repoDB := postgre.NewWorkerRepository(databaseHelper)
-	restApiService	:= restapi.NewRestApiService()
-
+	repoDatabase := pg.NewWorkerRepository(databasePG)
 	// Setup msk
 	producerWorker, err := event.NewProducerWorker(appServer.KafkaConfig)
 	if err != nil {
 		log.Error().Err(err).Msg("Erro na abertura do Kafka")
 	}
 
-	workerService := service.NewWorkerService(	&repoDB, 
-												appServer.RestEndpoint,
+	restApiService	:= restapi.NewRestApiService(&appServer)
+	workerService := service.NewWorkerService(	&repoDatabase, 
+												&appServer,
 												restApiService, 
 												producerWorker, 
 												appServer.KafkaConfig.Topic)
@@ -88,7 +87,5 @@ func main() {
 	httpWorkerAdapter 	:= handler.NewHttpWorkerAdapter(workerService)
 	httpServer 			:= handler.NewHttpAppServer(appServer.Server)
 
-	httpServer.StartHttpAppServer(	ctx, 
-									&httpWorkerAdapter,
-									&appServer)
+	httpServer.StartHttpAppServer(ctx,&httpWorkerAdapter,&appServer)
 }

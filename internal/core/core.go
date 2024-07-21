@@ -45,10 +45,9 @@ type Server struct {
 }
 
 type RestEndpoint struct {
-	ServiceUrlDomain 		string `json:"service_url_domain"`
-	XApigwId				string `json:"xApigwId"`
-	ServiceUrlDomainPayFee	string `json:"service_url_domain_pay_fee"`
-	XApigwIdPayFee			string `json:"xApigwId_pay_fee"`
+	ServiceUrlDomain 	string `json:"service_url_domain"`
+	XApigwId			string `json:"xApigwId"`
+	ServerHost			string `json:"server_host_localhost,omitempty"`
 }
 
 type KafkaConfig struct {

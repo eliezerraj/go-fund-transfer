@@ -11,7 +11,7 @@ import (
 	"github.com/go-fund-transfer/internal/core"
 	"github.com/go-fund-transfer/internal/erro"
 	"github.com/go-fund-transfer/internal/adapter/restapi"
-	"github.com/go-fund-transfer/internal/repository/postgre"
+	"github.com/go-fund-transfer/internal/repository/pg"
 	"github.com/go-fund-transfer/internal/adapter/event"
 	"github.com/go-fund-transfer/internal/lib"
 )
@@ -19,23 +19,23 @@ import (
 var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
-	workerRepository 		*postgre.WorkerRepository
-	restEndpoint			*core.RestEndpoint
+	workerRepo		 		*pg.WorkerRepository
+	appServer				*core.AppServer
 	restApiService			*restapi.RestApiService
 	producerWorker			*event.ProducerWorker
 	topic					*core.Topic
 }
 
-func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
-						restEndpoint		*core.RestEndpoint,
+func NewWorkerService(	workerRepo		*pg.WorkerRepository,
+						appServer		*core.AppServer,
 						restApiService		*restapi.RestApiService,
 						producerWorker		*event.ProducerWorker,
 						topic				*core.Topic) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
-		workerRepository:	workerRepository,
-		restEndpoint:		restEndpoint,
+		workerRepo: 		workerRepo,
+		appServer:			appServer,
 		restApiService:		restApiService,
 		producerWorker: 	producerWorker,
 		topic:				topic,
@@ -46,7 +46,7 @@ func (s WorkerService) SetSessionVariable(	ctx context.Context,
 											userCredential string) (bool, error){
 	childLogger.Debug().Msg("SetSessionVariable")
 
-	res, err := s.workerRepository.SetSessionVariable(ctx, userCredential)
+	res, err := s.workerRepo.SetSessionVariable(ctx, userCredential)
 	if err != nil {
 		return false, err
 	}
@@ -59,28 +59,26 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 
 	span := lib.Span(ctx, "service.Transfer")	
 
-	tx, err := s.workerRepository.StartTx(ctx)
+	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback(ctx)
 		} else {
-			tx.Commit()
+			tx.Commit(ctx)
 		}
-		defer span.End()
+		s.workerRepo.ReleaseTx(conn)
+		span.End()
 	}()
 
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
 	// Get data from account source credit
-	urlDomain := s.restEndpoint.ServiceUrlDomain + "/fundBalanceAccount/"  + transfer.AccountIDFrom
-	rest_interface_acc_from, err := s.restApiService.GetData(ctx, 
-															urlDomain, 
-															s.restEndpoint.XApigwId,
-															transfer.AccountIDFrom )
+	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
+	rest_interface_acc_from, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -94,11 +92,8 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	json.Unmarshal(jsonString, &acc_parsed_from)
 
 	// Get data from account source debit
-	urlDomain = s.restEndpoint.ServiceUrlDomain + "/fundBalanceAccount/"  + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
-															urlDomain, 
-															s.restEndpoint.XApigwId,
-															transfer.AccountIDTo )
+	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
+	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -120,11 +115,9 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	}
 
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
-	urlDomain = s.restEndpoint.ServiceUrlDomain + "/transferFund"
-	_, err = s.restApiService.PostData(ctx, 
-										urlDomain, 
-										s.restEndpoint.XApigwId, 
-										transfer)
+
+	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/transferFund"
+	_, err = s.restApiService.CallRestApi(ctx,"POST",path, &s.appServer.RestEndpoint.XApigwId,transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +132,7 @@ func (s WorkerService) Get(ctx context.Context, transfer core.Transfer) (*core.T
 	span := lib.Span(ctx, "service.Get")
 	defer span.End()
 
-	res, err := s.workerRepository.Get(ctx, transfer)
+	res, err := s.workerRepo.Get(ctx, transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -152,26 +145,24 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 
 	span := lib.Span(ctx, "service.CreditFundSchedule")
 
-	tx, err := s.workerRepository.StartTx(ctx)
+	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback(ctx)
 		} else {
-			tx.Commit()
+			tx.Commit(ctx)
 		}
-		defer span.End()
+		s.workerRepo.ReleaseTx(conn)
+		span.End()
 	}()
 
 	// Get account data
-	urlDomain := s.restEndpoint.ServiceUrlDomain + "/get/"  + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.GetData(ctx, 
-															urlDomain, 
-															s.restEndpoint.XApigwId, 
-															transfer.AccountIDTo )
+	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + transfer.AccountIDTo
+	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +178,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 	transfer.FkAccountIDTo 		= acc_to_parsed.ID
 	transfer.Status				= "CREDIT_EVENT_CREATED"
 
-	res, err := s.workerRepository.Transfer(ctx, tx, transfer)
+	res, err := s.workerRepo.Transfer(ctx, tx, transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +203,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 	transfer.Status	= "CREDIT_SCHEDULE"
 	childLogger.Debug().Interface("===>transfer:",transfer).Msg("")
 
-	res_update, err := s.workerRepository.Update(ctx, tx, transfer)
+	res_update, err := s.workerRepo.Update(ctx, tx, transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -229,26 +220,24 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 
 	span := lib.Span(ctx, "service.DebitFundSchedule")
 
-	tx, err := s.workerRepository.StartTx(ctx)
+	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback(ctx)
 		} else {
-			tx.Commit()
+			tx.Commit(ctx)
 		}
-		defer span.End()
+		s.workerRepo.ReleaseTx(conn)
+		span.End()
 	}()
 
 	// Get account data
-	urlDomain := s.restEndpoint.ServiceUrlDomain + "/get/"  + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.GetData(	ctx, 
-															urlDomain, 
-															s.restEndpoint.XApigwId, 
-															transfer.AccountIDTo )
+	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + transfer.AccountIDTo
+	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +253,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 	transfer.FkAccountIDTo 		= acc_to_parsed.ID
 	transfer.Status				= "DEBIT_EVENT_CREATED"
 
-	res, err := s.workerRepository.Transfer(ctx, tx, transfer)
+	res, err := s.workerRepo.Transfer(ctx, tx, transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +278,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 	transfer.Status	= "DEBIT_SCHEDULE"
 	childLogger.Debug().Interface("===>transfer:",transfer).Msg("")
 
-	res_update, err := s.workerRepository.Update(ctx, tx, transfer)
+	res_update, err := s.workerRepo.Update(ctx, tx, transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -307,26 +296,24 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 
 	span := lib.Span(ctx, "service.TransferViaEvent")
 
-	tx, err := s.workerRepository.StartTx(ctx)
+	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback(ctx)
 		} else {
-			tx.Commit()
+			tx.Commit(ctx)
 		}
-		defer span.End()
+		s.workerRepo.ReleaseTx(conn)
+		span.End()
 	}()
 
 	// Get data from account source credit
-	urlDomain := s.restEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
-	rest_interface_acc_from, err := s.restApiService.GetData(	ctx, 
-																urlDomain, 
-																s.restEndpoint.XApigwId, 
-																transfer.AccountIDFrom )
+	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
+	rest_interface_acc_from, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -340,11 +327,8 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 	json.Unmarshal(jsonString, &acc_parsed_from)
 
 	// Get data from account source debit
-	urlDomain = s.restEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.GetData(	ctx, 
-															urlDomain, 
-															s.restEndpoint.XApigwId, 
-															transfer.AccountIDTo )
+	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
+	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +346,7 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 	transfer.FkAccountIDTo 		= acc_parsed_to.FkAccountID
 	transfer.Status				= "TRANSFER_EVENT_CREATED"
 
-	res, err := s.workerRepository.Transfer(ctx, tx, transfer)
+	res, err := s.workerRepo.Transfer(ctx, tx, transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +370,7 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 	transfer.Status	= "TRANSFER_SCHEDULE"
 	childLogger.Debug().Interface("===>transfer:",transfer).Msg("")
 
-	res_update, err := s.workerRepository.Update(ctx, tx, transfer)
+	res_update, err := s.workerRepo.Update(ctx, tx, transfer)
 	if err != nil {
 		return nil, err
 	}
