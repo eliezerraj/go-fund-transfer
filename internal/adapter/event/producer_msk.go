@@ -8,6 +8,7 @@ import (
 	"hash/fnv"
 
 	"github.com/rs/zerolog/log"
+	"github.com/google/uuid"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-fund-transfer/internal/core"
@@ -78,9 +79,13 @@ func (p *ProducerWorker) Producer(ctx context.Context, event core.Event) error{
 	}
 	key	:= event.Key
 
+	newUUID := uuid.New()
+	uuidString := newUUID.String()
+
 	childLogger.Debug().Msg("++++++++++++++++++++++++++++++++")
 	childLogger.Debug().Interface("Topic ==>",event.EventType).Msg("")
 	childLogger.Debug().Interface("Key   ==>",key).Msg("")
+	childLogger.Debug().Interface("UUID  ==>",uuidString).Msg("")
 	childLogger.Debug().Interface("Event ==>",event.EventData).Msg("")
 	childLogger.Debug().Interface("salt :", salt).Msg("")
 	//childLogger.Debug().Interface("Partition", getPartition(salt, &p.configurations.KafkaConfigurations.Partition)).Msg("")
@@ -88,7 +93,7 @@ func (p *ProducerWorker) Producer(ctx context.Context, event core.Event) error{
 
 	producer := p.producer
 	deliveryChan := make(chan kafka.Event)
-	err = producer.Produce(	&kafka.Message	{	TopicPartition: kafka.TopicPartition{	Topic: &event.EventType, 
+	err = producer.Produce(	&kafka.Message	{TopicPartition: kafka.TopicPartition{	Topic: &event.EventType, 
 																					Partition: kafka.PartitionAny,
 																					//Partition: getPartition(	salt,
 																					//							&p.configurations.KafkaConfigurations.Partition,
@@ -96,7 +101,15 @@ func (p *ProducerWorker) Producer(ctx context.Context, event core.Event) error{
 																				},
 									Key:    []byte(key),											
 									Value: 	[]byte(payload), 
-									Headers:  []kafka.Header{{Key: "ACCOUNT",Value: []byte(key) }},
+									Headers:  []kafka.Header{	{
+																	Key: "ACCOUNT",
+																	Value: []byte(key), 
+																},
+																{
+																	Key: "RequesId",
+																	Value: []byte(uuidString), 
+																},
+															},
 								},
 							deliveryChan)
 	if err != nil {
