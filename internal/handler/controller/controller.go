@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (	
 	"strconv"
@@ -9,36 +9,34 @@ import (
 
 	"github.com/go-fund-transfer/internal/core"
 	"github.com/go-fund-transfer/internal/erro"
-	
+	"github.com/go-fund-transfer/internal/service"	
 )
 
-var childLogger = log.With().Str("handler", "handler").Logger()
+var childLogger = log.With().Str("handler", "controller").Logger()
 
-// Middleware v01
-func MiddleWareHandlerHeader(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (INICIO)  --------------")
+//-------------------------------------------------------
+type HttpWorkerAdapter struct {
+	workerService 	*service.WorkerService
+}
+
+func NewHttpWorkerAdapter(workerService *service.WorkerService) HttpWorkerAdapter {
+	childLogger.Debug().Msg("NewHttpWorkerAdapter")
 	
-		/*if reqHeadersBytes, err := json.Marshal(r.Header); err != nil {
-			childLogger.Error().Err(err).Msg("Could not Marshal http headers !!!")
-		} else {
-			childLogger.Debug().Str("Headers : ", string(reqHeadersBytes) ).Msg("")
-		}
+	return HttpWorkerAdapter{
+		workerService: workerService,
+	}
+}
 
-		childLogger.Debug().Str("Method : ", r.Method ).Msg("")
-		childLogger.Debug().Str("URL : ", r.URL.Path ).Msg("")*/
+type APIError struct {
+	StatusCode	int  `json:"statusCode"`
+	Msg			any `json:"msg"`
+}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
-		//log.Println(r.Header.Get("Host"))
-		//log.Println(r.Header.Get("User-Agent"))
-		//log.Println(r.Header.Get("X-Forwarded-For"))
-
-		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (FIM) ----------------")
-
-		next.ServeHTTP(w, r)
-	})
+func NewAPIError(statusCode int, err error) APIError {
+	return APIError{
+		StatusCode: statusCode,
+		Msg:		err.Error(),
+	}
 }
 
 // Middleware v02 - with decoratorDB
@@ -102,23 +100,24 @@ func (h *HttpWorkerAdapter) Transfer( rw http.ResponseWriter, req *http.Request)
 	transfer := core.Transfer{}
 	err := json.NewDecoder(req.Body).Decode(&transfer)
     if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
-        return
+		apiError := NewAPIError(400, erro.ErrUnmarshal)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
     }
 
 	res, err := h.workerService.Transfer(req.Context(), transfer)
 	if err != nil {
+		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(404, err)
 			default:
-				rw.WriteHeader(400)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(500, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -138,16 +137,16 @@ func (h *HttpWorkerAdapter) CreditFundSchedule( rw http.ResponseWriter, req *htt
 
 	res, err := h.workerService.CreditFundSchedule(req.Context(), transfer)
 	if err != nil {
+		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(404, err)
 			default:
-				rw.WriteHeader(400)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(500, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -160,23 +159,24 @@ func (h *HttpWorkerAdapter) DebitFundSchedule( rw http.ResponseWriter, req *http
 	transfer := core.Transfer{}
 	err := json.NewDecoder(req.Body).Decode(&transfer)
     if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
-        return
+		apiError := NewAPIError(400, erro.ErrUnmarshal)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
     }
 
 	res, err := h.workerService.DebitFundSchedule(req.Context(), transfer)
 	if err != nil {
+		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(404, err)
 			default:
-				rw.WriteHeader(400)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(500, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -191,20 +191,23 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 
 	varID, err := strconv.Atoi(vars["id"]) 
     if err != nil { 
-		rw.WriteHeader(500)
-		json.NewEncoder(rw).Encode(erro.ErrInvalidId.Error())
+		apiError := NewAPIError(400, erro.ErrInvalidId)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
 		return
     } 
   
 	transfer.ID = varID
 	res, err := h.workerService.Get(req.Context(), transfer)
 	if err != nil {
+		var apiError APIError
 		switch err {
-		default:
-			rw.WriteHeader(500)
-			json.NewEncoder(rw).Encode(err.Error())
-			return
+			default:
+				apiError = NewAPIError(500, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -217,23 +220,24 @@ func (h *HttpWorkerAdapter) TransferViaEvent( rw http.ResponseWriter, req *http.
 	transfer := core.Transfer{}
 	err := json.NewDecoder(req.Body).Decode(&transfer)
     if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
-        return
+		apiError := NewAPIError(400, erro.ErrUnmarshal)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
     }
 
 	res, err := h.workerService.TransferViaEvent(req.Context(), transfer)
 	if err != nil {
+		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(404, err)
 			default:
-				rw.WriteHeader(400)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(500, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)

@@ -11,7 +11,7 @@ import (
 	"github.com/go-fund-transfer/internal/core"
 	"github.com/go-fund-transfer/internal/erro"
 	"github.com/go-fund-transfer/internal/adapter/restapi"
-	"github.com/go-fund-transfer/internal/repository/pg"
+	"github.com/go-fund-transfer/internal/repository/storage"
 	"github.com/go-fund-transfer/internal/adapter/event"
 	"github.com/go-fund-transfer/internal/lib"
 )
@@ -19,18 +19,18 @@ import (
 var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
-	workerRepo		 		*pg.WorkerRepository
+	workerRepo		 		*storage.WorkerRepository
 	appServer				*core.AppServer
 	restApiService			*restapi.RestApiService
 	producerWorker			*event.ProducerWorker
 	topic					*core.Topic
 }
 
-func NewWorkerService(	workerRepo		*pg.WorkerRepository,
+func NewWorkerService(	workerRepo		*storage.WorkerRepository,
 						appServer		*core.AppServer,
-						restApiService		*restapi.RestApiService,
-						producerWorker		*event.ProducerWorker,
-						topic				*core.Topic) *WorkerService{
+						restApiService	*restapi.RestApiService,
+						producerWorker	*event.ProducerWorker,
+						topic			*core.Topic) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
