@@ -125,7 +125,7 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	return "sucesso", nil
 }
 
-func (s WorkerService) Get(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
+func (s WorkerService) Get(ctx context.Context, transfer *core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Get")
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 	
@@ -140,7 +140,7 @@ func (s WorkerService) Get(ctx context.Context, transfer core.Transfer) (*core.T
 	return res, nil
 }
 
-func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
+func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer *core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("CrediTFundSchedule")
 
 	span := lib.Span(ctx, "service.CreditFundSchedule")
@@ -186,7 +186,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 	// Send data to Kafka
 	transfer.ID	= res.ID
 	transfer.TransferAt = res.TransferAt
-	eventData := core.EventData{&transfer}
+	eventData := core.EventData{transfer}
 	event := core.Event{
 		Key: transfer.AccountIDTo,
 		EventDate: time.Now(),
@@ -212,10 +212,10 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer core.Tra
 		return nil, err
 	}
 
-	return &transfer, nil
+	return transfer, nil
 }
 
-func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
+func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer *core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("DebitFundSchedule")
 
 	span := lib.Span(ctx, "service.DebitFundSchedule")
@@ -261,7 +261,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 	// Send data to Kafka
 	transfer.ID	= res.ID
 	transfer.TransferAt = res.TransferAt
-	eventData := core.EventData{&transfer}
+	eventData := core.EventData{transfer}
 	event := core.Event{
 		Key: transfer.AccountIDTo,
 		EventDate: time.Now(),
@@ -287,10 +287,10 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer core.Tran
 		return nil, err
 	}
 
-	return &transfer, nil
+	return transfer, nil
 }
 
-func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Transfer) (interface{}, error){
+func (s WorkerService) TransferViaEvent(ctx context.Context, transfer *core.Transfer) (interface{}, error){
 	childLogger.Debug().Msg("TransferViaEvent")
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
@@ -353,7 +353,7 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer core.Trans
 
 	// Send data to Kafka
 	transfer.ID	= res.ID
-	eventData := core.EventData{&transfer}
+	eventData := core.EventData{transfer}
 	event := core.Event{
 		Key: transfer.AccountIDFrom + ":" + transfer.AccountIDTo,
 		EventDate: time.Now(),

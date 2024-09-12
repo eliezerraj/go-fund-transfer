@@ -108,7 +108,7 @@ func (w WorkerRepository) ReleaseTx(connection *pgxpool.Conn) {
 	defer connection.Release()
 }
 //------------
-func (w WorkerRepository) Transfer(ctx context.Context, tx pgx.Tx ,transfer core.Transfer) (*core.Transfer, error){
+func (w WorkerRepository) Transfer(ctx context.Context, tx pgx.Tx ,transfer *core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Transfer")
 	//childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
@@ -136,10 +136,10 @@ func (w WorkerRepository) Transfer(ctx context.Context, tx pgx.Tx ,transfer core
 
 	transfer.ID = id
 
-	return &transfer , nil
+	return transfer , nil
 }
 
-func (w WorkerRepository) Get(ctx context.Context, transfer core.Transfer) (*core.Transfer, error){
+func (w WorkerRepository) Get(ctx context.Context, transfer *core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Get")
 
 	span := lib.Span(ctx, "repo.Get")	
@@ -193,7 +193,7 @@ func (w WorkerRepository) Get(ctx context.Context, transfer core.Transfer) (*cor
 	return &result_query , nil
 }
 
-func (w WorkerRepository) Update(ctx context.Context, tx pgx.Tx, transfer core.Transfer) (int64, error){
+func (w WorkerRepository) Update(ctx context.Context, tx pgx.Tx, transfer *core.Transfer) (int64, error){
 	childLogger.Debug().Msg("Update")
 	childLogger.Debug().Interface("transfer : ", transfer).Msg("")
 

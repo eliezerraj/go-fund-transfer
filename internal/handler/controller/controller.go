@@ -135,7 +135,7 @@ func (h *HttpWorkerAdapter) CreditFundSchedule( rw http.ResponseWriter, req *htt
         return
     }
 
-	res, err := h.workerService.CreditFundSchedule(req.Context(), transfer)
+	res, err := h.workerService.CreditFundSchedule(req.Context(), &transfer)
 	if err != nil {
 		var apiError APIError
 		switch err {
@@ -165,7 +165,7 @@ func (h *HttpWorkerAdapter) DebitFundSchedule( rw http.ResponseWriter, req *http
 		return
     }
 
-	res, err := h.workerService.DebitFundSchedule(req.Context(), transfer)
+	res, err := h.workerService.DebitFundSchedule(req.Context(), &transfer)
 	if err != nil {
 		var apiError APIError
 		switch err {
@@ -198,7 +198,7 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
     } 
   
 	transfer.ID = varID
-	res, err := h.workerService.Get(req.Context(), transfer)
+	res, err := h.workerService.Get(req.Context(), &transfer)
 	if err != nil {
 		var apiError APIError
 		switch err {
@@ -226,7 +226,7 @@ func (h *HttpWorkerAdapter) TransferViaEvent( rw http.ResponseWriter, req *http.
 		return
     }
 
-	res, err := h.workerService.TransferViaEvent(req.Context(), transfer)
+	res, err := h.workerService.TransferViaEvent(req.Context(), &transfer)
 	if err != nil {
 		var apiError APIError
 		switch err {
