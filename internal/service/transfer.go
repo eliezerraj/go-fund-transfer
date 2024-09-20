@@ -42,18 +42,6 @@ func NewWorkerService(	workerRepo		*storage.WorkerRepository,
 	}
 }
 
-func (s WorkerService) SetSessionVariable(	ctx context.Context, 
-											userCredential string) (bool, error){
-	childLogger.Debug().Msg("SetSessionVariable")
-
-	res, err := s.workerRepo.SetSessionVariable(ctx, userCredential)
-	if err != nil {
-		return false, err
-	}
-
-	return res, nil
-}
-
 func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (interface{}, error){
 	childLogger.Debug().Msg("TransferFund")
 

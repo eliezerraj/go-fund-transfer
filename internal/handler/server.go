@@ -80,7 +80,6 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	transferFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	transferFund.Handle("/transfer", 
 						http.HandlerFunc(httpWorkerAdapter.Transfer),)
-	transferFund.Use(httpWorkerAdapter.DecoratorDB)
 	transferFund.Use(otelmux.Middleware("go-fund-transfer"))
 
 	getTransfer := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
@@ -91,19 +90,16 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	CreditFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	CreditFund.Handle("/creditFundSchedule",  
 						http.HandlerFunc(httpWorkerAdapter.CreditFundSchedule),)
-	CreditFund.Use(httpWorkerAdapter.DecoratorDB)
 	CreditFund.Use(otelmux.Middleware("go-fund-transfer"))
 
 	DebitFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	DebitFund.Handle("/debitFundSchedule", 
 						http.HandlerFunc(httpWorkerAdapter.DebitFundSchedule),)
-	DebitFund.Use(httpWorkerAdapter.DecoratorDB)
 	DebitFund.Use(otelmux.Middleware("go-fund-transfer"))
 
 	transferViaEvent := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	transferViaEvent.Handle("/transferViaEvent", 
 						http.HandlerFunc(httpWorkerAdapter.TransferViaEvent),)
-	transferViaEvent.Use(httpWorkerAdapter.DecoratorDB)
 	transferViaEvent.Use(otelmux.Middleware("go-fund-transfer"))
 
 	srv := http.Server{
