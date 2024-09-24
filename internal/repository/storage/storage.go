@@ -37,7 +37,7 @@ func (w WorkerRepository) StartTx(ctx context.Context) (pgx.Tx, *pgxpool.Conn,er
 
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("Erro Acquire")
+		childLogger.Error().Err(err).Msg("error acquire")
 		return nil, nil, errors.New(err.Error())
 	}
 
@@ -77,7 +77,7 @@ func (w WorkerRepository) Transfer(ctx context.Context, tx pgx.Tx ,transfer *cor
 
 	var id int
 	if err := row.Scan(&id); err != nil {
-		childLogger.Error().Err(err).Msg("INSERT statement")
+		childLogger.Error().Err(err).Msg("erro insert statement")
 		return nil, errors.New(err.Error())
 	}
 
@@ -94,7 +94,7 @@ func (w WorkerRepository) Get(ctx context.Context, transfer *core.Transfer) (*co
 
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("Erro Acquire")
+		childLogger.Error().Err(err).Msg("erro acquire")
 		return nil, errors.New(err.Error())
 	}
 	defer w.databasePG.Release(conn)
@@ -114,7 +114,7 @@ func (w WorkerRepository) Get(ctx context.Context, transfer *core.Transfer) (*co
 
 	rows, err := conn.Query(ctx, query, transfer.ID)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("SELECT statement")
+		childLogger.Error().Err(err).Msg("error select statement")
 		return nil, errors.New(err.Error())
 	}
 
@@ -129,7 +129,7 @@ func (w WorkerRepository) Get(ctx context.Context, transfer *core.Transfer) (*co
 							&result_query.Amount,
 						)
 		if err != nil {
-			childLogger.Error().Err(err).Msg("Scan statement")
+			childLogger.Error().Err(err).Msg("error scan statement")
 			return nil, errors.New(err.Error())
         }
 	}

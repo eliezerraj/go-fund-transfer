@@ -174,7 +174,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer *core.Tr
 	// Send data to Kafka
 	transfer.ID	= res.ID
 	transfer.TransferAt = res.TransferAt
-	eventData := core.EventData{transfer}
+	eventData := core.EventData{Transfer: transfer}
 	event := core.Event{
 		Key: transfer.AccountIDTo,
 		EventDate: time.Now(),
@@ -249,7 +249,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer *core.Tra
 	// Send data to Kafka
 	transfer.ID	= res.ID
 	transfer.TransferAt = res.TransferAt
-	eventData := core.EventData{transfer}
+	eventData := core.EventData{Transfer: transfer}
 	event := core.Event{
 		Key: transfer.AccountIDTo,
 		EventDate: time.Now(),
@@ -341,7 +341,7 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer *core.Tran
 
 	// Send data to Kafka
 	transfer.ID	= res.ID
-	eventData := core.EventData{transfer}
+	eventData := core.EventData{Transfer: transfer}
 	event := core.Event{
 		Key: transfer.AccountIDFrom + ":" + transfer.AccountIDTo,
 		EventDate: time.Now(),

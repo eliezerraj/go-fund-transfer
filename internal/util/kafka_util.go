@@ -13,7 +13,7 @@ func GetKafkaEnv() core.KafkaConfig {
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("No .env File !!!!")
+		childLogger.Info().Err(err).Msg("env file not found !!!")
 	}
 
 	var kafkaConfig core.KafkaConfig

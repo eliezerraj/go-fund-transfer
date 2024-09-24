@@ -78,28 +78,23 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	header.Use(otelmux.Middleware("go-fund-transfer"))
 
 	transferFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-	transferFund.Handle("/transfer", 
-						http.HandlerFunc(httpWorkerAdapter.Transfer),)
+	transferFund.HandleFunc("/transfer",middleware.MiddleWareErrorHandler(httpWorkerAdapter.Transfer))
 	transferFund.Use(otelmux.Middleware("go-fund-transfer"))
 
 	getTransfer := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
-	getTransfer.Handle("/get/{id}", 
-						http.HandlerFunc(httpWorkerAdapter.Get),)
+	getTransfer.HandleFunc("/get/{id}",	middleware.MiddleWareErrorHandler(httpWorkerAdapter.Get))
 	getTransfer.Use(otelmux.Middleware("go-fund-transfer"))
 
 	CreditFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-	CreditFund.Handle("/creditFundSchedule",  
-						http.HandlerFunc(httpWorkerAdapter.CreditFundSchedule),)
+	CreditFund.HandleFunc("/creditFundSchedule",middleware.MiddleWareErrorHandler(httpWorkerAdapter.CreditFundSchedule))
 	CreditFund.Use(otelmux.Middleware("go-fund-transfer"))
 
 	DebitFund := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-	DebitFund.Handle("/debitFundSchedule", 
-						http.HandlerFunc(httpWorkerAdapter.DebitFundSchedule),)
+	DebitFund.HandleFunc("/debitFundSchedule",middleware.MiddleWareErrorHandler(httpWorkerAdapter.DebitFundSchedule))
 	DebitFund.Use(otelmux.Middleware("go-fund-transfer"))
 
 	transferViaEvent := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-	transferViaEvent.Handle("/transferViaEvent", 
-						http.HandlerFunc(httpWorkerAdapter.TransferViaEvent),)
+	transferViaEvent.HandleFunc("/transferViaEvent", middleware.MiddleWareErrorHandler(httpWorkerAdapter.TransferViaEvent))
 	transferViaEvent.Use(otelmux.Middleware("go-fund-transfer"))
 
 	srv := http.Server{
@@ -115,7 +110,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil {
-			childLogger.Error().Err(err).Msg("Cancel http mux server !!!")
+			childLogger.Error().Err(err).Msg("cancel http mux server !!!")
 		}
 	}()
 
@@ -124,8 +119,8 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	<-ch
 
 	if err := srv.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
-		childLogger.Error().Err(err).Msg("WARNING Dirty Shutdown !!!")
+		childLogger.Error().Err(err).Msg("warning dirty shutdown !!!")
 		return
 	}
-	childLogger.Info().Msg("Stop Done !!!!")
+	childLogger.Info().Msg("stop done !!!")
 }
