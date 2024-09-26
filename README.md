@@ -11,6 +11,8 @@ CRUD a transfer_moviment
 The service go-worker-credit was on charge of to consume the event and change the status to CREDIT_DONE
 
 kafka <==(topic.CREDIT)==> go-worker-credit (GROUP-02) (post:/add) ==(REST)==> go-credit(Service.Add) and change the transfer_moviment to CREDIT_DONE
+Or
+sqs <==(topic.CREDIT)==> 
 
 ## database
 

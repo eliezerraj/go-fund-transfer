@@ -34,6 +34,7 @@ type InfoPod struct {
 	IsAZ				bool   	`json:"is_az"`
 	Env					string `json:"enviroment,omitempty"`
 	AccountID			string `json:"account_id,omitempty"`
+	QueueType			string `json:"queue_type,omitempty"`
 }
 
 type Server struct {

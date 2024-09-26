@@ -50,6 +50,11 @@ func GetInfoPod() (	core.InfoPod,
 	if os.Getenv("ENV") !=  "" {	
 		infoPod.Env = os.Getenv("ENV")
 	}
+	if os.Getenv("POD_QUEUE_TYPE") !=  "" {
+		infoPod.QueueType = os.Getenv("POD_QUEUE_TYPE")
+	} else {
+		infoPod.QueueType = "kafka"
+	}
 	
 	// Get IP
 	addrs, err := net.InterfaceAddrs()
@@ -94,6 +99,7 @@ func GetInfoPod() (	core.InfoPod,
 	}
 	if os.Getenv("X_APIGW_API_ID") !=  "" {	
 		restEndpoint.XApigwId = os.Getenv("X_APIGW_API_ID")
+
 	}
 
 	return infoPod, server, restEndpoint

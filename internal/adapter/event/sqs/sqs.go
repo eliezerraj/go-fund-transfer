@@ -41,7 +41,7 @@ func NewNotifierSQS(ctx context.Context, queueConfig *core.QueueConfig) (*Notifi
 	return &notifierSQS, nil
 } 
 
-func (s NotifierSQS) Producer(ctx context.Context, event core.Event) error {
+func (s *NotifierSQS) Producer(ctx context.Context, event core.Event) error {
 	childLogger.Debug().Msg("ProducerEvent")
 
 	span := lib.Span(ctx, "event.producer-sqs")	

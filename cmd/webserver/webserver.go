@@ -10,6 +10,7 @@ import(
 	"github.com/go-fund-transfer/internal/util"
 	"github.com/go-fund-transfer/internal/adapter/event/kafka"
 	"github.com/go-fund-transfer/internal/adapter/event/sqs"
+	"github.com/go-fund-transfer/internal/adapter/event"
 	"github.com/go-fund-transfer/internal/handler"
 	"github.com/go-fund-transfer/internal/core"
 	"github.com/go-fund-transfer/internal/service"
@@ -20,8 +21,9 @@ import(
 )
 
 var(
-	logLevel 	= 	zerolog.DebugLevel
+	logLevel = zerolog.DebugLevel
 	appServer	core.AppServer
+	producerWorker	event.EventNotifier
 )
 
 func init(){
@@ -75,24 +77,22 @@ func Server() {
 	}
 	
 	repoDatabase := storage.NewWorkerRepository(databasePG)
-	// Setup msk
-	producerKafkaWorker, err := kafka.NewProducerWorker(appServer.KafkaConfig)
-	if err != nil {
-		log.Error().Err(err).Msg("erro connect to kafka")
+
+	// Setup queue type
+	if (appServer.InfoPod.QueueType == "kafka") {
+		producerWorker, err = kafka.NewProducerWorker(appServer.KafkaConfig)
+	} else {
+		producerWorker, err = sqs.NewNotifierSQS(ctx, appServer.QueueConfig)
 	}
-	
-	//Setup Notifier SQS	
-	_, err = sqs.NewNotifierSQS(ctx, appServer.QueueConfig)
 	if err != nil {
-		log.Error().Err(err).Msg("erro connect to sqs")
+		log.Error().Err(err).Msg("erro connect to queue")
 	}
 
 	restApiService	:= restapi.NewRestApiService(&appServer)
 	workerService := service.NewWorkerService(	&repoDatabase, 
 												&appServer,
 												restApiService, 
-												producerKafkaWorker,
-												//producerSqsWorker, 
+												producerWorker, 
 												appServer.KafkaConfig.Topic)
 
 	httpWorkerAdapter 	:= controller.NewHttpWorkerAdapter(workerService)
