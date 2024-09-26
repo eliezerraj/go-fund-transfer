@@ -8,7 +8,8 @@ import(
 	"github.com/rs/zerolog/log"
 
 	"github.com/go-fund-transfer/internal/util"
-	"github.com/go-fund-transfer/internal/adapter/event"
+	"github.com/go-fund-transfer/internal/adapter/event/kafka"
+	"github.com/go-fund-transfer/internal/adapter/event/sqs"
 	"github.com/go-fund-transfer/internal/handler"
 	"github.com/go-fund-transfer/internal/core"
 	"github.com/go-fund-transfer/internal/service"
@@ -31,6 +32,7 @@ func init(){
 	database := util.GetDatabaseEnv()
 	configOTEL := util.GetOtelEnv()
 	kafkaConfig := util.GetKafkaEnv()
+	queueConfig := util.GetQueueEnv()
 
 	appServer.InfoPod = &infoPod
 	appServer.Database = &database
@@ -38,6 +40,7 @@ func init(){
 	appServer.RestEndpoint = &restEndpoint
 	appServer.ConfigOTEL = &configOTEL
 	appServer.KafkaConfig = &kafkaConfig
+	appServer.QueueConfig = &queueConfig
 }
 
 func Server() {
@@ -73,16 +76,23 @@ func Server() {
 	
 	repoDatabase := storage.NewWorkerRepository(databasePG)
 	// Setup msk
-	producerWorker, err := event.NewProducerWorker(appServer.KafkaConfig)
+	_, err = kafka.NewProducerWorker(appServer.KafkaConfig)
 	if err != nil {
-		log.Error().Err(err).Msg("Erro na abertura do Kafka")
+		log.Error().Err(err).Msg("erro connect to kafka")
+	}
+	
+	//Setup Notifier SQS	
+	producerSqsWorker, err := sqs.NewNotifierSQS(ctx, appServer.QueueConfig)
+	if err != nil {
+		log.Error().Err(err).Msg("erro connect to sqs")
 	}
 
 	restApiService	:= restapi.NewRestApiService(&appServer)
 	workerService := service.NewWorkerService(	&repoDatabase, 
 												&appServer,
 												restApiService, 
-												producerWorker, 
+												//producerKafkaWorker,
+												producerSqsWorker, 
 												appServer.KafkaConfig.Topic)
 
 	httpWorkerAdapter 	:= controller.NewHttpWorkerAdapter(workerService)

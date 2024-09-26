@@ -22,14 +22,14 @@ type WorkerService struct {
 	workerRepo		 		*storage.WorkerRepository
 	appServer				*core.AppServer
 	restApiService			*restapi.RestApiService
-	producerWorker			*event.ProducerWorker
+	producerWorker			event.EventNotifier
 	topic					*core.Topic
 }
 
 func NewWorkerService(	workerRepo		*storage.WorkerRepository,
 						appServer		*core.AppServer,
 						restApiService	*restapi.RestApiService,
-						producerWorker	*event.ProducerWorker,
+						eventNotifier	event.EventNotifier,
 						topic			*core.Topic) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
@@ -37,7 +37,7 @@ func NewWorkerService(	workerRepo		*storage.WorkerRepository,
 		workerRepo: 		workerRepo,
 		appServer:			appServer,
 		restApiService:		restApiService,
-		producerWorker: 	producerWorker,
+		producerWorker: 	eventNotifier,
 		topic:				topic,
 	}
 }

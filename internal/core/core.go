@@ -2,7 +2,6 @@ package core
 
 import (
 	"time"
-
 )
 
 type DatabaseRDS struct {
@@ -23,6 +22,7 @@ type AppServer struct {
 	RestEndpoint	*RestEndpoint	`json:"rest_endpoint"`
 	ConfigOTEL		*ConfigOTEL		`json:"otel_config"`
 	KafkaConfig		*KafkaConfig	`json:"kafka_config"`
+	QueueConfig		*QueueConfig	`json:"queue_config"`
 }
 
 type InfoPod struct {
@@ -87,6 +87,11 @@ type Topic struct {
 	Credit     string    `json:"topic_credit"`
     Dedit      string    `json:"topic_debit"`
     Transfer   string    `json:"topic_transfer"`
+}
+
+type QueueConfig struct {
+	QueueUrl	string	`json:"queue_url"`
+	AwsRegion	string	`json:"aws_region"`
 }
 
 type ConfigOTEL struct {

@@ -2,7 +2,6 @@ package core
 
 import (
 	"time"
-
 )
 
 type Transfer struct {

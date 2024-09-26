@@ -33,3 +33,5 @@ data:
   TOPIC_TRANSFER: "topic.transfer.01"
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-01-xray-collector.default.svc.cluster.local:4317"
   ENV: "dev"
+  QUEUE_URL_CREDIT: "https://sqs.us-east-2.amazonaws.com/908671954593/sqs-credit.fifo"
+  AWS_REGION: "us-east-2"
