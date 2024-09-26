@@ -76,13 +76,13 @@ func Server() {
 	
 	repoDatabase := storage.NewWorkerRepository(databasePG)
 	// Setup msk
-	_, err = kafka.NewProducerWorker(appServer.KafkaConfig)
+	producerKafkaWorker, err := kafka.NewProducerWorker(appServer.KafkaConfig)
 	if err != nil {
 		log.Error().Err(err).Msg("erro connect to kafka")
 	}
 	
 	//Setup Notifier SQS	
-	producerSqsWorker, err := sqs.NewNotifierSQS(ctx, appServer.QueueConfig)
+	_, err = sqs.NewNotifierSQS(ctx, appServer.QueueConfig)
 	if err != nil {
 		log.Error().Err(err).Msg("erro connect to sqs")
 	}
@@ -91,8 +91,8 @@ func Server() {
 	workerService := service.NewWorkerService(	&repoDatabase, 
 												&appServer,
 												restApiService, 
-												//producerKafkaWorker,
-												producerSqsWorker, 
+												producerKafkaWorker,
+												//producerSqsWorker, 
 												appServer.KafkaConfig.Topic)
 
 	httpWorkerAdapter 	:= controller.NewHttpWorkerAdapter(workerService)
