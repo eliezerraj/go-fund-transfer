@@ -56,7 +56,7 @@ func (s *NotifierSQS) Producer(ctx context.Context, event core.Event) error {
 	input := &sqs.SendMessageInput{
 		QueueUrl:    aws.String(s.queueConfig.QueueUrl),
 		MessageBody: aws.String(string(messageJson)),
-		MessageGroupId:         aws.String("group-01"),
+		MessageGroupId:         aws.String(event.EventData.Transfer.AccountIDTo), 
         MessageDeduplicationId: aws.String(strconv.Itoa(event.EventData.Transfer.ID)),
 	}
 

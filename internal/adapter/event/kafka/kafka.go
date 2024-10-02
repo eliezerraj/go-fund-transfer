@@ -23,7 +23,6 @@ func NewProducerWorker(configurations *core.KafkaConfig) ( *ProducerWorker, erro
 	childLogger.Debug().Msg("NewProducerWorker")
 
 	kafkaBrokerUrls := 	configurations.KafkaConfigurations.Brokers1 + "," + configurations.KafkaConfigurations.Brokers2 + "," + configurations.KafkaConfigurations.Brokers3
-
 	config := &kafka.ConfigMap{	"bootstrap.servers":            kafkaBrokerUrls,
 								"security.protocol":            configurations.KafkaConfigurations.Protocol, //"SASL_SSL",
 								"sasl.mechanisms":              configurations.KafkaConfigurations.Mechanisms, //"SCRAM-SHA-256",
