@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-fund-transfer/internal/core"
 	"github.com/go-fund-transfer/internal/lib"
+	"github.com/go-fund-transfer/internal/erro"
 
 	"github.com/go-fund-transfer/internal/repository/pg"
 
@@ -57,7 +58,6 @@ func (w WorkerRepository) ReleaseTx(connection *pgxpool.Conn) {
 //------------
 func (w WorkerRepository) Transfer(ctx context.Context, tx pgx.Tx ,transfer *core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Transfer")
-	//childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
 	span := lib.Span(ctx, "storage.Transfer")	
     defer span.End()
@@ -114,9 +114,10 @@ func (w WorkerRepository) Get(ctx context.Context, transfer *core.Transfer) (*co
 
 	rows, err := conn.Query(ctx, query, transfer.ID)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("error select statement")
+		childLogger.Error().Err(err).Msg("error conn.Query")
 		return nil, errors.New(err.Error())
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan( 	&result_query.ID, 
@@ -132,10 +133,10 @@ func (w WorkerRepository) Get(ctx context.Context, transfer *core.Transfer) (*co
 			childLogger.Error().Err(err).Msg("error scan statement")
 			return nil, errors.New(err.Error())
         }
+		return &result_query , nil
 	}
 
-	defer rows.Close()
-	return &result_query , nil
+	return nil, erro.ErrNotFound
 }
 
 func (w WorkerRepository) Update(ctx context.Context, tx pgx.Tx, transfer *core.Transfer) (int64, error){

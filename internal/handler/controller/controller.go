@@ -162,6 +162,8 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) error
 	if err != nil {
 		var apiError APIError
 		switch err {
+			case erro.ErrNotFound:
+				apiError = NewAPIError(http.StatusNotFound, err)
 			default:
 				apiError = NewAPIError(http.StatusInternalServerError, err)
 		}

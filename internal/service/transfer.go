@@ -115,7 +115,7 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 
 func (s WorkerService) Get(ctx context.Context, transfer *core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Get")
-	childLogger.Debug().Interface("transfer:",transfer).Msg("")
+	//childLogger.Debug().Interface("transfer:",transfer).Msg("")
 	
 	span := lib.Span(ctx, "service.Get")
 	defer span.End()
@@ -229,6 +229,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer *core.Tra
 	if err != nil {
 		return nil, err
 	}
+
 	var acc_to_parsed core.Transfer
 	err = mapstructure.Decode(rest_interface_acc_to, &acc_to_parsed)
     if err != nil {

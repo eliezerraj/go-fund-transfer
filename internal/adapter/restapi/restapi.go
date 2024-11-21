@@ -36,14 +36,15 @@ func (r *RestApiService) CallRestApi(	ctx context.Context,
 										x_apigw_api_id *string, 
 										body interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("CallRestApi")
-
-	span, ctxSpan := lib.SpanCtx(ctx, "adapter.CallRestApi:" + path)	
-    defer span.End()
-
+	childLogger.Debug().Msg("--------------------------")
 	childLogger.Debug().Str("method : ", method).Msg("")
 	childLogger.Debug().Str("path : ", path).Msg("")
 	childLogger.Debug().Interface("x_apigw_api_id : ", x_apigw_api_id).Msg("")
 	childLogger.Debug().Interface("body : ", body).Msg("")
+	childLogger.Debug().Msg("--------------------------")
+
+	span, ctxSpan := lib.SpanCtx(ctx, "adapter.CallRestApi:" + path)	
+    defer span.End()
 
 	transportHttp := &http.Transport{}
 
@@ -64,7 +65,7 @@ func (r *RestApiService) CallRestApi(	ctx context.Context,
 
 	req, err := http.NewRequestWithContext(ctxSpan, method, path, payload)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("error Request")
+		childLogger.Error().Err(err).Msg("error NewRequestWithContext")
 		return false, errors.New(err.Error())
 	}
 
@@ -76,11 +77,12 @@ func (r *RestApiService) CallRestApi(	ctx context.Context,
 
 	resp, err := client.Do(req.WithContext(ctxSpan))
 	if err != nil {
-		childLogger.Error().Err(err).Msg("error Do Request")
+		childLogger.Error().Err(err).Msg("error client.Do")
 		return false, errors.New(err.Error())
 	}
 
 	childLogger.Debug().Int("StatusCode :", resp.StatusCode).Msg("")
+	
 	switch (resp.StatusCode) {
 		case 401:
 			return false, erro.ErrHTTPForbiden
