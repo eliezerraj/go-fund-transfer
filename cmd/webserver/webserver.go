@@ -18,6 +18,7 @@ import(
 	"github.com/go-fund-transfer/internal/handler/controller"
 	"github.com/go-fund-transfer/internal/repository/storage"
 	"github.com/go-fund-transfer/internal/adapter/restapi"
+	"github.com/go-fund-transfer/internal/handler/listener"
 )
 
 var(
@@ -30,7 +31,7 @@ func init(){
 	log.Debug().Msg("init")
 	zerolog.SetGlobalLevel(logLevel)
 
-	infoPod , server, restEndpoint := util.GetInfoPod()
+	infoPod , server, restEndpoint, awsServiceConfig := util.GetInfoPod()
 	database := util.GetDatabaseEnv()
 	configOTEL := util.GetOtelEnv()
 	kafkaConfig := util.GetKafkaEnv()
@@ -43,6 +44,7 @@ func init(){
 	appServer.ConfigOTEL = &configOTEL
 	appServer.KafkaConfig = &kafkaConfig
 	appServer.QueueConfig = &queueConfig
+	appServer.AwsServiceConfig = &awsServiceConfig
 }
 
 func Server() {
@@ -55,6 +57,9 @@ func Server() {
 	ctx, cancel := context.WithTimeout(context.Background(), 
 									time.Duration( appServer.Server.ReadTimeout ) * time.Second)
 	defer cancel()
+
+	//Token Refresh
+	token_refresh := listener.NewToken(context.Background(), listener.AuthFuncTest)
 
 	// Open Database
 	count := 1
@@ -93,10 +98,11 @@ func Server() {
 												&appServer,
 												restApiService, 
 												producerWorker, 
-												appServer.KafkaConfig.Topic)
+												appServer.KafkaConfig.Topic,
+												token_refresh)
 
 	httpWorkerAdapter 	:= controller.NewHttpWorkerAdapter(workerService)
 	httpServer 			:= handler.NewHttpAppServer(appServer.Server)
-
+	
 	httpServer.StartHttpAppServer(ctx,&httpWorkerAdapter,&appServer)
 }

@@ -12,16 +12,17 @@ import(
 	"github.com/aws/aws-sdk-go-v2/config"
 
 	"github.com/go-fund-transfer/internal/core"
-
 )
 
 var childLogger = log.With().Str("util", "util").Logger()
 
 func GetInfoPod() (	core.InfoPod,
 					core.Server, 
-					core.RestEndpoint) {
+					core.RestEndpoint,
+					core.AwsServiceConfig) {
 	childLogger.Debug().Msg("GetInfoPod")
 
+	// Load env file - Just for local test
 	err := godotenv.Load(".env")
 	if err != nil {
 		childLogger.Info().Err(err).Msg("env file not found !!!")
@@ -30,6 +31,7 @@ func GetInfoPod() (	core.InfoPod,
 	var infoPod 	core.InfoPod
 	var server		core.Server
 	var restEndpoint core.RestEndpoint
+	var awsServiceConfig core.AwsServiceConfig
 
 	server.ReadTimeout = 60
 	server.WriteTimeout = 60
@@ -94,13 +96,20 @@ func GetInfoPod() (	core.InfoPod,
 		server.Port = intVar
 	}
 
+	// Load the endpoints (DEBIT/CREDIT)
 	if os.Getenv("SERVICE_URL_DOMAIN") !=  "" {	
 		restEndpoint.ServiceUrlDomain = os.Getenv("SERVICE_URL_DOMAIN")
 	}
 	if os.Getenv("X_APIGW_API_ID") !=  "" {	
 		restEndpoint.XApigwId = os.Getenv("X_APIGW_API_ID")
-
 	}
 
-	return infoPod, server, restEndpoint
+	if os.Getenv("SERVICE_URL_JWT_SA") !=  "" {	
+		restEndpoint.XApigwId = os.Getenv("SERVICE_URL_JWT_SA")
+	}
+	if os.Getenv("SECRET_JWT_SA_CREDENTIAL") !=  "" {	
+		restEndpoint.XApigwId = os.Getenv("SECRET_JWT_SA_CREDENTIAL")
+	}
+
+	return infoPod, server, restEndpoint, awsServiceConfig
 }

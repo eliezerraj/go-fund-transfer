@@ -14,6 +14,7 @@ import (
 	"github.com/go-fund-transfer/internal/repository/storage"
 	"github.com/go-fund-transfer/internal/adapter/event"
 	"github.com/go-fund-transfer/internal/lib"
+	"github.com/go-fund-transfer/internal/handler/listener"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
@@ -24,13 +25,15 @@ type WorkerService struct {
 	restApiService			*restapi.RestApiService
 	producerWorker			event.EventNotifier
 	topic					*core.Topic
+	tokenRefresher			*listener.TokenRefresh			
 }
 
 func NewWorkerService(	workerRepo		*storage.WorkerRepository,
 						appServer		*core.AppServer,
 						restApiService	*restapi.RestApiService,
 						eventNotifier	event.EventNotifier,
-						topic			*core.Topic) *WorkerService{
+						topic			*core.Topic,
+						tokenRefresher	*listener.TokenRefresh) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
@@ -39,6 +42,7 @@ func NewWorkerService(	workerRepo		*storage.WorkerRepository,
 		restApiService:		restApiService,
 		producerWorker: 	eventNotifier,
 		topic:				topic,
+		tokenRefresher:		tokenRefresher,
 	}
 }
 
@@ -66,7 +70,7 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 
 	// Get data from account source credit
 	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
-	rest_interface_acc_from, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	rest_interface_acc_from, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +85,7 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 
 	// Get data from account source debit
 	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +109,7 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 	childLogger.Debug().Interface("transfer:",transfer).Msg("")
 
 	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/transferFund"
-	_, err = s.restApiService.CallRestApi(ctx,"POST",path, &s.appServer.RestEndpoint.XApigwId,transfer)
+	_, err = s.restApiService.CallRestApi(ctx,"POST",path, &s.appServer.RestEndpoint.XApigwId, nil, transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +123,8 @@ func (s WorkerService) Get(ctx context.Context, transfer *core.Transfer) (*core.
 	
 	span := lib.Span(ctx, "service.Get")
 	defer span.End()
+
+	s.tokenRefresher.GetToken()
 
 	res, err := s.workerRepo.Get(ctx, transfer)
 	if err != nil {
@@ -150,7 +156,7 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer *core.Tr
 
 	// Get account data
 	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +231,7 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer *core.Tra
 
 	// Get account data
 	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil ,nil)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +308,7 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer *core.Tran
 
 	// Get data from account source credit
 	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
-	rest_interface_acc_from, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	rest_interface_acc_from, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil ,nil)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +323,7 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer *core.Tran
 
 	// Get data from account source debit
 	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil ,nil)
 	if err != nil {
 		return nil, err
 	}

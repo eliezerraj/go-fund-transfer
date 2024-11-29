@@ -30,11 +30,13 @@ func NewRestApiService(restApiConfig *core.AppServer) (*RestApiService){
 	}
 }
 
-func (r *RestApiService) CallRestApi(	ctx context.Context, 
-										method	string,
-										path string, 
-										x_apigw_api_id *string, 
-										body interface{}) (interface{}, error) {
+func (r *RestApiService) CallRestApi(ctx context.Context, 
+									method	string,
+									path string, 
+									x_apigw_api_id *string,
+									token	*string, 
+									body interface{}) (interface{}, error) {
+
 	childLogger.Debug().Msg("CallRestApi")
 	childLogger.Debug().Msg("--------------------------")
 	childLogger.Debug().Str("method : ", method).Msg("")
@@ -73,6 +75,10 @@ func (r *RestApiService) CallRestApi(	ctx context.Context,
 	if (x_apigw_api_id != nil){
 		req.Header.Add("x-apigw-api-id", *x_apigw_api_id)
 	}
+
+
+
+
 	req.Host = r.restApiConfig.RestEndpoint.ServerHost;
 
 	resp, err := client.Do(req.WithContext(ctxSpan))
