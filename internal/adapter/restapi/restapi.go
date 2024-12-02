@@ -16,7 +16,7 @@ import(
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-var childLogger = log.With().Str("adapter/restapi", "restApiService").Logger()
+var childLogger = log.With().Str("adapter/restapi", "CallApiRest").Logger()
 //----------------------------------------------------
 type RestApiService struct {
 	restApiConfig *core.AppServer
@@ -30,22 +30,16 @@ func NewRestApiService(restApiConfig *core.AppServer) (*RestApiService){
 	}
 }
 
-func (r *RestApiService) CallRestApi(ctx context.Context, 
-									method	string,
-									path string, 
-									x_apigw_api_id *string,
-									token	*string, 
-									body interface{}) (interface{}, error) {
+func (r *RestApiService) CallApiRest(ctx context.Context,
+									restApiCallData	core.RestApiCallData,
+									body interface{}) (interface{}, error){
 
-	childLogger.Debug().Msg("CallRestApi")
+	childLogger.Debug().Msg("CallApiRest")
 	childLogger.Debug().Msg("--------------------------")
-	childLogger.Debug().Str("method : ", method).Msg("")
-	childLogger.Debug().Str("path : ", path).Msg("")
-	childLogger.Debug().Interface("x_apigw_api_id : ", x_apigw_api_id).Msg("")
-	childLogger.Debug().Interface("body : ", body).Msg("")
+	childLogger.Debug().Interface("CallApiRest : ", restApiCallData).Msg("")
 	childLogger.Debug().Msg("--------------------------")
 
-	span, ctxSpan := lib.SpanCtx(ctx, "adapter.CallRestApi:" + path)	
+	span, ctxSpan := lib.SpanCtx(ctx, "adapter.CallApiRest:" + restApiCallData.Url)	
     defer span.End()
 
 	transportHttp := &http.Transport{}
@@ -65,19 +59,16 @@ func (r *RestApiService) CallRestApi(ctx context.Context,
 		json.NewEncoder(payload).Encode(body)
 	}
 
-	req, err := http.NewRequestWithContext(ctxSpan, method, path, payload)
+	req, err := http.NewRequestWithContext(ctxSpan, restApiCallData.Method, restApiCallData.Url, payload)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error NewRequestWithContext")
 		return false, errors.New(err.Error())
 	}
 
 	req.Header.Add("Content-Type", "application/json;charset=UTF-8");
-	if (x_apigw_api_id != nil){
-		req.Header.Add("x-apigw-api-id", *x_apigw_api_id)
+	if (restApiCallData.X_Api_Id != nil){
+		req.Header.Add("x-apigw-api-id", *restApiCallData.X_Api_Id )
 	}
-
-
-
 
 	req.Host = r.restApiConfig.RestEndpoint.ServerHost;
 

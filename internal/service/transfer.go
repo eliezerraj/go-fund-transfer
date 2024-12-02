@@ -7,7 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"encoding/json"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/go-fund-transfer/internal/core"
 	"github.com/go-fund-transfer/internal/erro"
 	"github.com/go-fund-transfer/internal/adapter/restapi"
@@ -18,6 +17,7 @@ import (
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
+var restApiCallData core.RestApiCallData
 
 type WorkerService struct {
 	workerRepo		 		*storage.WorkerRepository
@@ -48,9 +48,9 @@ func NewWorkerService(	workerRepo		*storage.WorkerRepository,
 
 func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (interface{}, error){
 	childLogger.Debug().Msg("TransferFund")
+	childLogger.Debug().Interface(" -----------------------------> transfer:",transfer).Msg("")
 
 	span := lib.Span(ctx, "service.Transfer")	
-
 	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
@@ -66,37 +66,45 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 		span.End()
 	}()
 
-	childLogger.Debug().Interface("transfer:",transfer).Msg("")
-
 	// Get data from account source credit
-	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
-	rest_interface_acc_from, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	rest_interface_acc_from, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error CallApiRest /fundBalanceAccount")
 		return nil, err
 	}
-	var acc_parsed_from core.AccountBalance
-
 	jsonString, err  := json.Marshal(rest_interface_acc_from)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var acc_parsed_from core.AccountBalance
 	json.Unmarshal(jsonString, &acc_parsed_from)
 
+	childLogger.Debug().Interface(" ##################### >>>>>>>> acc_parsed_from: ",acc_parsed_from).Msg("")
+
 	// Get data from account source debit
-	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	rest_interface_acc_to, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error CallApiRest /fundBalanceAccount")
 		return nil, err
 	}
-	var acc_parsed_to core.AccountBalance
-	
 	jsonString, err = json.Marshal(rest_interface_acc_to)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var acc_parsed_to core.AccountBalance
 	json.Unmarshal(jsonString, &acc_parsed_to)
+
+	childLogger.Debug().Interface(" ##################### >>>>>>>> acc_parsed_to: ",acc_parsed_to).Msg("")
 
 	transfer.FkAccountIDFrom = acc_parsed_from.FkAccountID
 	transfer.FkAccountIDTo = acc_parsed_to.FkAccountID
@@ -106,20 +114,23 @@ func (s WorkerService) Transfer(ctx context.Context, transfer core.Transfer) (in
 		return nil, erro.ErrOverDraft
 	}
 
-	childLogger.Debug().Interface("transfer:",transfer).Msg("")
+	childLogger.Debug().Interface(" ++++++++++++++ >>>>>>>> transfer: ",transfer).Msg("")
 
-	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/transferFund"
-	_, err = s.restApiService.CallRestApi(ctx,"POST",path, &s.appServer.RestEndpoint.XApigwId, nil, transfer)
+	restApiCallData.Method = "POST"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/transferFund"
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	_, err = s.restApiService.CallApiRest(ctx, restApiCallData, transfer)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error CallApiRest /transferFund")
 		return nil, err
 	}
 
-	return "sucesso", nil
+	return transfer, nil
 }
 
 func (s WorkerService) Get(ctx context.Context, transfer *core.Transfer) (*core.Transfer, error){
 	childLogger.Debug().Msg("Get")
-	//childLogger.Debug().Interface("transfer:",transfer).Msg("")
 	
 	span := lib.Span(ctx, "service.Get")
 	defer span.End()
@@ -155,17 +166,22 @@ func (s WorkerService) CreditFundSchedule(ctx context.Context, transfer *core.Tr
 	}()
 
 	// Get account data
-	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + transfer.AccountIDTo
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	res_interface, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error parse interface")
 		return nil, err
 	}
-	var acc_to_parsed core.Transfer
-	err = mapstructure.Decode(rest_interface_acc_to, &acc_to_parsed)
-    if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
+	jsonString, err  := json.Marshal(res_interface)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var acc_to_parsed core.Transfer
+	json.Unmarshal(jsonString, &acc_to_parsed)
 
 	// Register the moviment into table transfer_moviment (work as a history)
 	transfer.FkAccountIDFrom 	= acc_to_parsed.ID
@@ -230,18 +246,22 @@ func (s WorkerService) DebitFundSchedule(ctx context.Context, transfer *core.Tra
 	}()
 
 	// Get account data
-	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil ,nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/get/" + transfer.AccountIDTo
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	res_interface, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error parse interface")
 		return nil, err
 	}
-
-	var acc_to_parsed core.Transfer
-	err = mapstructure.Decode(rest_interface_acc_to, &acc_to_parsed)
-    if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
+	jsonString, err  := json.Marshal(res_interface)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var acc_to_parsed core.Transfer
+	json.Unmarshal(jsonString, &acc_to_parsed)
 
 	// Register the moviment into table transfer_moviment (work as a history)
 	transfer.FkAccountIDFrom 	= acc_to_parsed.ID
@@ -307,34 +327,41 @@ func (s WorkerService) TransferViaEvent(ctx context.Context, transfer *core.Tran
 	}()
 
 	// Get data from account source credit
-	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
-	rest_interface_acc_from, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil ,nil)
-	if err != nil {
-		return nil, err
-	}
-	var acc_parsed_from core.AccountBalance
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDFrom
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
 
-	jsonString, err  := json.Marshal(rest_interface_acc_from)
+	rest_interface_acc_from, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
+		return nil, err
+	}
+	jsonString, err  := json.Marshal(rest_interface_acc_from)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var acc_parsed_from core.AccountBalance
 	json.Unmarshal(jsonString, &acc_parsed_from)
 
 	// Get data from account source debit
-	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
-	rest_interface_acc_to, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil ,nil)
-	if err != nil {
-		return nil, err
-	}
-	var acc_parsed_to core.AccountBalance
-	
-	jsonString, err = json.Marshal(rest_interface_acc_to)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + transfer.AccountIDTo
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	rest_interface_acc_to, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
+		return nil, err
+	}
+	jsonString, err = json.Marshal(rest_interface_acc_to)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var acc_parsed_to core.AccountBalance
 	json.Unmarshal(jsonString, &acc_parsed_to)
+
 
 	// Register the moviment into table transfer_moviment (work as a history)
 	transfer.FkAccountIDFrom 	= acc_parsed_from.FkAccountID

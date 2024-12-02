@@ -3,6 +3,7 @@ package webserver
 import(
 	"time"
 	"context"
+	"encoding/json"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -19,12 +20,14 @@ import(
 	"github.com/go-fund-transfer/internal/repository/storage"
 	"github.com/go-fund-transfer/internal/adapter/restapi"
 	"github.com/go-fund-transfer/internal/handler/listener"
+	"github.com/go-fund-transfer/internal/config/secret_manager_aws"
 )
 
 var(
 	logLevel = zerolog.DebugLevel
 	appServer	core.AppServer
 	producerWorker	event.EventNotifier
+	restApiCallData core.RestApiCallData
 )
 
 func init(){
@@ -55,11 +58,8 @@ func Server() {
 	log.Debug().Msg("----------------------------------------------------")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 
-									time.Duration( appServer.Server.ReadTimeout ) * time.Second)
+									time.Duration( appServer.Server.ReadTimeout) * time.Second)
 	defer cancel()
-
-	//Token Refresh
-	token_refresh := listener.NewToken(context.Background(), listener.AuthFuncTest)
 
 	// Open Database
 	count := 1
@@ -80,7 +80,6 @@ func Server() {
 		}
 		break
 	}
-	
 	repoDatabase := storage.NewWorkerRepository(databasePG)
 
 	// Setup queue type
@@ -93,7 +92,37 @@ func Server() {
 		log.Error().Err(err).Msg("erro connect to queue")
 	}
 
+	// Load DSA secrets
+	clientSecretManager, err := secret_manager_aws.NewClientSecretManager(ctx, *appServer.AwsServiceConfig)
+	if err != nil {
+		log.Error().Err(err).Msg("erro NewClientSecretManager")
+	}
+	res_secret, err :=clientSecretManager.GetSecret(ctx, appServer.AwsServiceConfig.SecretJwtSACredential)
+	if err != nil {
+		log.Error().Err(err).Msg("erro GetSecret")
+	}
+
+	var secretData map[string]string
+	if err := json.Unmarshal([]byte(*res_secret), &secretData); err != nil {
+		log.Error().Err(err).Msg("erro Unmarshal Secret")
+	}
+
+	//Setup JWT SA
+	restApiCallData.Method = "POST"
+	restApiCallData.Url = appServer.AwsServiceConfig.ServiceUrlJwtSA +"/oauth_credential"
+	restApiCallData.UsernameAuth = secretData["username"]
+	restApiCallData.PasswordAuth = secretData["password"]
+	appServer.RestApiCallData = &restApiCallData
+
+	// Setup Service (usecase)
 	restApiService	:= restapi.NewRestApiService(&appServer)
+
+	//Token Refresh
+	token_refresh := listener.NewToken(	context.Background(), 
+										listener.AuthFuncTest,
+										restApiCallData, 
+										restApiService.CallApiRest)
+
 	workerService := service.NewWorkerService(	&repoDatabase, 
 												&appServer,
 												restApiService, 

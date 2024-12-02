@@ -24,6 +24,7 @@ type AppServer struct {
 	KafkaConfig		*KafkaConfig	`json:"kafka_config"`
 	QueueConfig		*QueueConfig	`json:"queue_config"`
 	AwsServiceConfig *AwsServiceConfig	`json:"aws_service_config"`
+	RestApiCallData *RestApiCallData `json:"rest_api_call_dsa_data"`
 }
 
 type InfoPod struct {
@@ -110,13 +111,13 @@ type Transfer struct {
 	ID				int			`json:"id,omitempty"`
 	AccountIDFrom	string		`json:"account_id_from,omitempty"`
 	FkAccountIDFrom	int			`json:"fk_account_id_from,omitempty"`
+	AccountIDTo		string		`json:"account_id_to,omitempty"`
+	FkAccountIDTo	int			`json:"fk_account_id_to,omitempty"`
 	TransferAt		time.Time 	`json:"transfer_at,omitempty"`
 	Type			string  	`json:"type_charge,omitempty"`
 	Status			string  	`json:"status,omitempty"`
 	Currency		string  	`json:"currency,omitempty"`
 	Amount			float64 	`json:"amount,omitempty"`
-	AccountIDTo		string		`json:"account_id_to,omitempty"`
-	FkAccountIDTo	int			`json:"fk_account_id_to,omitempty"`
 }
 
 type AccountBalance struct {
@@ -131,15 +132,23 @@ type AccountBalance struct {
 	UserLastUpdate	*string  	`json:"user_last_update,omitempty"`
 }
 
-type TokenSA struct {
-	Token string `json:"token_sa,omitempty"`
-	Err   error
-}
-
 type AwsServiceConfig struct {
 	AwsRegion				string	`json:"aws_region"`
 	ServiceUrlJwtSA 		string	`json:"service_url_jwt_sa"`
 	SecretJwtSACredential 	string	`json:"secret_jwt_credential"`
 	UsernameJwtDA			string	`json:"username_jwt_sa"`
 	PasswordJwtDA			string	`json:"password_jwt_sa"`
+}
+
+type TokenSA struct {
+	Token string `json:"token,omitempty"`
+	Err   error
+}
+
+type RestApiCallData struct {
+	Url				string `json:"url"`
+	Method			string `json:"method"`
+	X_Api_Id		*string `json:"x-apigw-api-id"`
+	UsernameAuth	string `json:"user"`
+	PasswordAuth 	string `json:"password"`
 }

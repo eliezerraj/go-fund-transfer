@@ -105,10 +105,13 @@ func GetInfoPod() (	core.InfoPod,
 	}
 
 	if os.Getenv("SERVICE_URL_JWT_SA") !=  "" {	
-		restEndpoint.XApigwId = os.Getenv("SERVICE_URL_JWT_SA")
+		awsServiceConfig.ServiceUrlJwtSA = os.Getenv("SERVICE_URL_JWT_SA")
 	}
 	if os.Getenv("SECRET_JWT_SA_CREDENTIAL") !=  "" {	
-		restEndpoint.XApigwId = os.Getenv("SECRET_JWT_SA_CREDENTIAL")
+		awsServiceConfig.SecretJwtSACredential = os.Getenv("SECRET_JWT_SA_CREDENTIAL")
+	}
+	if os.Getenv("AWS_REGION") !=  "" {
+		awsServiceConfig.AwsRegion = os.Getenv("AWS_REGION")
 	}
 
 	return infoPod, server, restEndpoint, awsServiceConfig
