@@ -14,7 +14,7 @@ import (
 var childLogger = log.With().Str("handler", "listener").Logger()
 
 const(
-	lifeSpan = 100 * time.Second
+	lifeSpan = 10 * time.Second
 )
 
 type TokenRefresh struct {
@@ -57,7 +57,7 @@ func (t *TokenRefresh) RefreshToken(ctx context.Context){
 	// Test
 	token, _ = t.authorize()
 
-	token_duration = 500 * time.Second
+	token_duration = 60 * time.Second
 	jwt_expired := time.After(token_duration - lifeSpan)
 	
 	for {

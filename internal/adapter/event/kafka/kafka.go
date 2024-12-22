@@ -1,11 +1,11 @@
 package kafka
 
 import (
-	"encoding/json"
 	"context"
+	"encoding/json"
 
-	"github.com/rs/zerolog/log"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-fund-transfer/internal/core"
@@ -19,7 +19,7 @@ type ProducerWorker struct{
 	producer        *kafka.Producer
 }
 
-func NewProducerWorker(configurations *core.KafkaConfig) ( *ProducerWorker, error) {
+func NewProducerWorker(configurations *core.KafkaConfig) (*ProducerWorker, error) {
 	childLogger.Debug().Msg("NewProducerWorker")
 
 	kafkaBrokerUrls := 	configurations.KafkaConfigurations.Brokers1 + "," + configurations.KafkaConfigurations.Brokers2 + "," + configurations.KafkaConfigurations.Brokers3
@@ -71,20 +71,22 @@ func (p *ProducerWorker) Producer(ctx context.Context, event core.Event) error{
 
 	producer := p.producer
 	deliveryChan := make(chan kafka.Event)
-	err = producer.Produce(	&kafka.Message	{TopicPartition: kafka.TopicPartition{	Topic: &event.EventType, 
-																					Partition: kafka.PartitionAny,
-																				},
-									Key:    []byte(key),											
-									Value: 	[]byte(payload), 
-									Headers:  []kafka.Header{	{
-																	Key: "ACCOUNT",
-																	Value: []byte(key), 
-																},
-																{
-																	Key: "RequesId",
-																	Value: []byte(uuidString), 
-																},
-															},
+	err = producer.Produce(	&kafka.Message	{TopicPartition: kafka.TopicPartition{	
+													Topic: &event.EventType, 
+													Partition: kafka.PartitionAny,
+												},
+												Key:    []byte(key),											
+												Value: 	[]byte(payload), 
+												Headers:  []kafka.Header{	
+																			{
+																				Key: "ACCOUNT",
+																				Value: []byte(key), 
+																			},
+																			{
+																				Key: "RequesId",
+																				Value: []byte(uuidString), 
+																			},
+																		},
 								},
 							deliveryChan)
 	if err != nil {

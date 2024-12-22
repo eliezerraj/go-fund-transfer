@@ -1,7 +1,7 @@
 #docker build -t go-fund-transfer .
 #docker run -dit --name go-fund-transfer -p 5000:5000 go-fund-transfer
 
-FROM golang:1.22.4 As builder
+FROM golang:1.23.3 As builder
 
 RUN apt-get update && apt-get install bash && apt-get install -y --no-install-recommends ca-certificates
 
