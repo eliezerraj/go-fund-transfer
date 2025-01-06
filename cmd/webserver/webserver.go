@@ -119,7 +119,6 @@ func Server() {
 
 	//Token Refresh
 	token_refresh := listener.NewToken(	context.Background(), 
-										listener.AuthFuncTest,
 										restApiCallData, 
 										restApiService.CallApiRest)
 
