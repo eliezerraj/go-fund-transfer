@@ -1,14 +1,14 @@
-package util
+package configuration
 
 import(
 	"os"
 	"strconv"
 
 	"github.com/joho/godotenv"
-	"github.com/go-fund-transfer/internal/core"
+	go_core_event "github.com/eliezerraj/go-core/event/kafka" 
 )
 
-func GetKafkaEnv() core.KafkaConfig {
+func GetKafkaEnv() (go_core_event.KafkaConfigurations, []string) {
 	childLogger.Debug().Msg("GetKafkaEnv")
 
 	err := godotenv.Load(".env")
@@ -16,9 +16,7 @@ func GetKafkaEnv() core.KafkaConfig {
 		childLogger.Info().Err(err).Msg("env file not found !!!")
 	}
 
-	var kafkaConfig core.KafkaConfig
-	var kafkaConfigurations core.KafkaConfigurations
-	var topic core.Topic
+	var kafkaConfigurations go_core_event.KafkaConfigurations
 
 	if os.Getenv("KAFKA_USER") !=  "" {
 		kafkaConfigurations.Username = os.Getenv("KAFKA_USER")
@@ -44,7 +42,6 @@ func GetKafkaEnv() core.KafkaConfig {
 	if os.Getenv("KAFKA_BROKER_3") !=  "" {
 		kafkaConfigurations.Brokers3 = os.Getenv("KAFKA_BROKER_3")
 	}
-
 	if os.Getenv("KAFKA_PARTITION") !=  "" {
 		intVar, _ := strconv.Atoi(os.Getenv("KAFKA_PARTITION"))
 		kafkaConfigurations.Partition = intVar
@@ -54,18 +51,19 @@ func GetKafkaEnv() core.KafkaConfig {
 		kafkaConfigurations.ReplicationFactor = intVar
 	}
 
-	if os.Getenv("TOPIC_CREDIT") !=  "" {
-		topic.Credit = os.Getenv("TOPIC_CREDIT")
-	}
-	if os.Getenv("TOPIC_DEBIT") !=  "" {
-		topic.Dedit = os.Getenv("TOPIC_DEBIT")
-	}
-	if os.Getenv("TOPIC_TRANSFER") !=  "" {
-		topic.Transfer = os.Getenv("TOPIC_TRANSFER")
-	}
-	
-	kafkaConfig.KafkaConfigurations = &kafkaConfigurations
-	kafkaConfig.Topic = &topic
+	list_topics := []string{}
 
-	return kafkaConfig
+	if os.Getenv("TOPIC_CREDIT") !=  "" {
+		list_topics = append(list_topics, os.Getenv("TOPIC_CREDIT"))
+	}
+
+	if os.Getenv("TOPIC_DEBIT") !=  "" {
+		list_topics = append(list_topics, os.Getenv("TOPIC_DEBIT"))
+	}
+
+	if os.Getenv("TOPIC_TRANSFER") !=  "" {
+		list_topics = append(list_topics, os.Getenv("TOPIC_TRANSFER"))
+	}
+
+	return kafkaConfigurations, list_topics
 }

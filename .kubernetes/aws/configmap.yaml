@@ -6,7 +6,7 @@ metadata:
   labels:
     app: *app-name
 data:
-  API_VERSION: "2.1"
+  API_VERSION: "3.0"
   POD_NAME: "go-fund-transfer.k8"
   PORT: "5005"
   DB_HOST: "rds-proxy-db-arch.proxy-couoacqalfwt.us-east-2.rds.amazonaws.com"
@@ -15,9 +15,8 @@ data:
   DB_SCHEMA: "public"
   DB_DRIVER: "postgres"
   SETPOD_AZ: "false"
-  #SERVICE_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
-  SERVICE_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
-  X_APIGW_API_ID: "129t4y8eoj"
+  ENV: "dev"
+
   KAFKA_USER: "admin"
   KAFKA_PASSWORD: "admin"
   KAFKA_PROTOCOL: "SASL_SSL"
@@ -32,9 +31,26 @@ data:
   TOPIC_DEBIT: "topic.debit.01"
   TOPIC_TRANSFER: "topic.transfer.01"
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-01-xray-collector.default.svc.cluster.local:4317"
-  ENV: "dev"
-  QUEUE_URL_CREDIT: "https://sqs.us-east-2.amazonaws.com/908671954593/sqs-credit.fifo"
-  AWS_REGION: "us-east-2"
-  POD_QUEUE_TYPE: "kafka"
-  SERVICE_URL_JWT_SA: "https://go-auth0.architecturedev.caradhras.io"
-  SECRET_JWT_SA_CREDENTIAL: "go-fund-credential-sa"
+
+  NAME_SERVICE_01: "go-account"
+  URL_SERVICE_01: https://vpce.global.dev.caradhras.io/pv/get"
+  METHOD_SERVICE_01: "GET"
+  X_APIGW_API_ID_SERVICE_01: "129t4y8eoj"
+
+  NAME_SERVICE_02: "go-debit"
+  URL_SERVICE_02: https://vpce.global.dev.caradhras.io/pv/add"
+  METHOD_SERVICE_02: "POST"
+  X_APIGW_API_ID_SERVICE_02: "cy5ry2263h"
+
+  NAME_SERVICE_03: "go-credit"
+  URL_SERVICE_03: "https://vpce.global.dev.caradhras.io/pv/add"
+  METHOD_SERVICE_03: "POST
+  X_APIGW_API_ID_SERVICE_03: "7egms7zn67"
+
+  #SERVICE_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
+  #SERVICE_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
+  #QUEUE_URL_CREDIT: "https://sqs.us-east-2.amazonaws.com/908671954593/sqs-credit.fifo"
+  #AWS_REGION: "us-east-2"
+  #POD_QUEUE_TYPE: "kafka"
+  #SERVICE_URL_JWT_SA: "https://go-auth0.architecturedev.caradhras.io"
+  #SECRET_JWT_SA_CREDENTIAL: "go-fund-credential-sa"

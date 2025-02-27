@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install bash && apt-get install -y --no-install-re
 
 WORKDIR /app
 COPY . .
+RUN go mod tidy
 
 WORKDIR /app/cmd
 RUN go build -o go-fund-transfer -ldflags '-linkmode external -w -extldflags "-static"'

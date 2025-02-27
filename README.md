@@ -38,41 +38,54 @@ sqs <==(topic.CREDIT)==>
 
 ## Endpoints
 
-+ POST /creditFundSchedule
++ POST /creditTransferEvent
+
         {
-            "currency": "BRL",
-            "amount": 1.00,
+            "account_from": {
+                "account_id":"ACC-500"
+            },
             "type_charge": "CREDIT",
-            "account_id_to": "ACC-5"
+            "currency": "BRL",
+            "amount": 10.00
         }
 
-+ POST /debitFundSchedule
++ POST /debitTransferEvent
 
         {
-            "currency": "BRL",
-            "amount": -13.00,
+            "account_from": {
+                "account_id":"ACC-500"
+            },
             "type_charge": "DEBIT",
-            "account_id_to": "ACC-2"
+            "currency": "BRL",
+            "amount": -10.00
         }
 
 + GET /get/1
 
-+ POST /transfer
++ POST /add/transfer
 
         {
-            "account_id_from": "ACC-1",
-            "account_id_to": "ACC-2",
+            "account_from": {
+                "account_id":"ACC-500"
+            },
+            "account_to": {
+                "account_id":"ACC-600"
+            },
             "type_charge": "TRANSFER",
             "currency": "BRL",
-            "amount": 1.00
+            "amount": 10.00
         }
 
-+ POST /transferViaEvent
++ POST /add/transferEvent
 
-    {
-        "account_id_from": "ACC-1",
-        "account_id_to": "ACC-2",
-        "type_charge": "TRANSFER",
-        "currency": "BRL",
-        "amount": 5.00
-    }
+        {
+            "account_from": {
+                "account_id":"ACC-500"
+            },
+            "account_to": {
+                "account_id":"ACC-600"
+            },
+            "type_charge": "TRANSFER",
+            "currency": "BRL",
+            "amount": 10.00
+        }

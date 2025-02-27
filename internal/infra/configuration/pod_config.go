@@ -1,37 +1,33 @@
-package util
+package configuration
 
 import(
 	"os"
 	"strconv"
 	"net"
 	"context"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/config"
 
-	"github.com/go-fund-transfer/internal/core"
+	"github.com/go-fund-transfer/internal/core/model"
 )
 
-var childLogger = log.With().Str("util", "util").Logger()
+var childLogger = log.With().Str("infra", "configuration").Logger()
 
-func GetInfoPod() (	core.InfoPod,
-					core.Server, 
-					core.RestEndpoint,
-					core.AwsServiceConfig) {
+// Load the Pod configuration
+func GetInfoPod() (	model.InfoPod, model.Server) {
 	childLogger.Debug().Msg("GetInfoPod")
 
-	// Load env file - Just for local test
 	err := godotenv.Load(".env")
 	if err != nil {
 		childLogger.Info().Err(err).Msg("env file not found !!!")
 	}
 
-	var infoPod 	core.InfoPod
-	var server		core.Server
-	var restEndpoint core.RestEndpoint
-	var awsServiceConfig core.AwsServiceConfig
+	var infoPod 	model.InfoPod
+	var server		model.Server
 
 	server.ReadTimeout = 60
 	server.WriteTimeout = 60
@@ -52,16 +48,11 @@ func GetInfoPod() (	core.InfoPod,
 	if os.Getenv("ENV") !=  "" {	
 		infoPod.Env = os.Getenv("ENV")
 	}
-	if os.Getenv("POD_QUEUE_TYPE") !=  "" {
-		infoPod.QueueType = os.Getenv("POD_QUEUE_TYPE")
-	} else {
-		infoPod.QueueType = "kafka"
-	}
 	
 	// Get IP
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Error().Err(err).Msg("error to get the POD IP address !!!")
+		log.Error().Err(err).Msg("error to get the POD IP address")
 		os.Exit(3)
 	}
 	for _, a := range addrs {
@@ -77,13 +68,13 @@ func GetInfoPod() (	core.InfoPod,
 	if (infoPod.IsAZ) {
 		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
-			childLogger.Error().Err(err).Msg("ERRO FATAL get Context !!!")
+			childLogger.Error().Err(err).Msg("fatal error get Context")
 			os.Exit(3)
 		}
 		client := imds.NewFromConfig(cfg)
 		response, err := client.GetInstanceIdentityDocument(context.TODO(), &imds.GetInstanceIdentityDocumentInput{})
 		if err != nil {
-			childLogger.Error().Err(err).Msg("unable to retrieve the region from the EC2 instance !!!")
+			childLogger.Error().Err(err).Msg("unable to retrieve the region from the EC2 instance")
 			os.Exit(3)
 		}
 		infoPod.AvailabilityZone = response.AvailabilityZone	
@@ -96,23 +87,21 @@ func GetInfoPod() (	core.InfoPod,
 		server.Port = intVar
 	}
 
-	// Load the endpoints (DEBIT/CREDIT)
-	if os.Getenv("SERVICE_URL_DOMAIN") !=  "" {	
-		restEndpoint.ServiceUrlDomain = os.Getenv("SERVICE_URL_DOMAIN")
-	}
-	if os.Getenv("X_APIGW_API_ID") !=  "" {	
-		restEndpoint.XApigwId = os.Getenv("X_APIGW_API_ID")
+	return infoPod, server
+}
+
+
+// Convert time string to time
+func ConvertToDate(date_str string) (*time.Time, error){
+	childLogger.Debug().Msg("ConvertToDate")
+
+	layout := "2006-01-02"
+
+	date, err := time.Parse(layout, date_str)
+	if err != nil {
+		log.Error().Err(err).Msg("error parsing date")
+		return nil, err
 	}
 
-	if os.Getenv("SERVICE_URL_JWT_SA") !=  "" {	
-		awsServiceConfig.ServiceUrlJwtSA = os.Getenv("SERVICE_URL_JWT_SA")
-	}
-	if os.Getenv("SECRET_JWT_SA_CREDENTIAL") !=  "" {	
-		awsServiceConfig.SecretJwtSACredential = os.Getenv("SECRET_JWT_SA_CREDENTIAL")
-	}
-	if os.Getenv("AWS_REGION") !=  "" {
-		awsServiceConfig.AwsRegion = os.Getenv("AWS_REGION")
-	}
-
-	return infoPod, server, restEndpoint, awsServiceConfig
+	return &date, nil
 }
