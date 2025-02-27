@@ -74,8 +74,11 @@ func main (){
 		break
 	}
 
+	// Database
 	database := database.NewWorkerRepository(&databasePGServer)
-	workerEvent, err := event.NewWorkerEvent(appServer.Topics ,appServer.KafkaConfigurations)
+
+	// Kafka
+	workerEvent, err := event.NewWorkerEvent(ctx, appServer.Topics, appServer.KafkaConfigurations)
 	if err != nil {
 		log.Error().Err(err).Msg("error open kafka")
 		panic(err)
