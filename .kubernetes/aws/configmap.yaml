@@ -33,12 +33,12 @@ data:
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-01-xray-collector.default.svc.cluster.local:4317"
 
   NAME_SERVICE_01: "go-account"
-  URL_SERVICE_01: https://vpce.global.dev.caradhras.io/pv/get"
+  URL_SERVICE_01: "https://vpce.global.dev.caradhras.io/pv/get"
   METHOD_SERVICE_01: "GET"
   X_APIGW_API_ID_SERVICE_01: "129t4y8eoj"
 
   NAME_SERVICE_02: "go-debit"
-  URL_SERVICE_02: https://vpce.global.dev.caradhras.io/pv/add"
+  URL_SERVICE_02: "https://vpce.global.dev.caradhras.io/pv/add"
   METHOD_SERVICE_02: "POST"
   X_APIGW_API_ID_SERVICE_02: "cy5ry2263h"
 
