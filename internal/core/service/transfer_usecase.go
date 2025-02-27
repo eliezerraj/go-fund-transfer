@@ -243,8 +243,8 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 	}
 
 	// Prepare to event credit
-	key := transfer.AccountFrom.AccountID
-	payload_bytes, err := json.Marshal(transfer.AccountFrom)
+	key := string(res_transfer.ID)
+	payload_bytes, err := json.Marshal(res_transfer)
 	if err != nil {
 		return nil, err
 	}
@@ -331,8 +331,8 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 	}
 
 	// Prepare to event debit
-	key := transfer.AccountFrom.AccountID
-	payload_bytes, err := json.Marshal(transfer.AccountFrom)
+	key := string(res_transfer.ID)
+	payload_bytes, err := json.Marshal(res_transfer)
 	if err != nil {
 		return nil, err
 	}
