@@ -184,12 +184,28 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 	if err != nil {
 		return nil, err
 	}
+	
+	// Start Kafka transaction
+	err = s.workerEvent.WorkerKafka.BeginTransaction()
+	if err != nil {
+		childLogger.Error().Err(err).Msg("failed to kafka BeginTransaction")
+		return nil, err
+	}
 
 	// Handle the transaction
 	defer func() {
 		if err != nil {
+			childLogger.Debug().Msg("ROLLBACK !!!!")
+			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
+			if err != nil {
+				childLogger.Error().Err(err).Msg("Failed to Kafka AbortTransaction")
+			}		
 			tx.Rollback(ctx)
 		} else {
+			err =  s.workerEvent.WorkerKafka.CommitTransaction(ctx)
+			if err != nil {
+				childLogger.Error().Err(err).Msg("Failed to Kafka CommitTransaction")
+			}
 			tx.Commit(ctx)
 		}
 		s.workerRepository.DatabasePGServer.ReleaseTx(conn)
@@ -255,6 +271,12 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 		return nil, err
 	}
 
+	// Just for testing (breaking) the transaction and testing kafka	
+	if transfer.Currency == "USD" {
+		err =  erro.ErrCurrencyInvalid
+		return nil, err
+	}
+
 	return res_transfer, nil
 }
 
@@ -272,11 +294,27 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 		return nil, err
 	}
 
+	// Start Kafka transaction
+	err = s.workerEvent.WorkerKafka.BeginTransaction()
+	if err != nil {
+		childLogger.Error().Err(err).Msg("failed to kafka BeginTransaction")
+		return nil, err
+	}
+
 	// Handle the transaction
 	defer func() {
 		if err != nil {
+			childLogger.Debug().Msg("ROLLBACK !!!!")
+			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
+			if err != nil {
+				childLogger.Error().Err(err).Msg("Failed to Kafka AbortTransaction")
+			}		
 			tx.Rollback(ctx)
 		} else {
+			err =  s.workerEvent.WorkerKafka.CommitTransaction(ctx)
+			if err != nil {
+				childLogger.Error().Err(err).Msg("Failed to Kafka CommitTransaction")
+			}
 			tx.Commit(ctx)
 		}
 		s.workerRepository.DatabasePGServer.ReleaseTx(conn)
@@ -360,11 +398,27 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 		return nil, err
 	}
 
+	// Start Kafka transaction
+	err = s.workerEvent.WorkerKafka.BeginTransaction()
+	if err != nil {
+		childLogger.Error().Err(err).Msg("failed to kafka BeginTransaction")
+		return nil, err
+	}
+
 	// Handle the transaction
 	defer func() {
 		if err != nil {
+			childLogger.Debug().Msg("ROLLBACK !!!!")
+			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
+			if err != nil {
+				childLogger.Error().Err(err).Msg("Failed to Kafka AbortTransaction")
+			}		
 			tx.Rollback(ctx)
 		} else {
+			err =  s.workerEvent.WorkerKafka.CommitTransaction(ctx)
+			if err != nil {
+				childLogger.Error().Err(err).Msg("Failed to Kafka CommitTransaction")
+			}
 			tx.Commit(ctx)
 		}
 		s.workerRepository.DatabasePGServer.ReleaseTx(conn)

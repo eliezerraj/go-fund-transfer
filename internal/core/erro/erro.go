@@ -17,4 +17,5 @@ var (
 	ErrInvalid			= errors.New("invalid data")
 	ErrTransInvalid		= errors.New("transaction invalid")
 	ErrAmountInvalid	= errors.New("amount invalid")
+	ErrCurrencyInvalid	= errors.New("currency invalid")
 )

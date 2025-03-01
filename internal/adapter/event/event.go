@@ -19,6 +19,7 @@ type WorkerEvent struct {
 	WorkerKafka *go_core_event.ProducerWorker 
 }
 
+// No kafka transaction
 func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *go_core_event.KafkaConfigurations) (*WorkerEvent, error) {
 	childLogger.Debug().Msg("NewWorkerEvent")
 
@@ -30,6 +31,32 @@ func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *g
 	if err != nil {
 		return nil, err
 	}
+
+	return &WorkerEvent{
+		Topics: topics,
+		WorkerKafka: workerKafka,
+	},nil
+}
+
+// With Kafka Transactio
+func NewWorkerEventTX(ctx context.Context, topics []string, kafkaConfigurations *go_core_event.KafkaConfigurations) (*WorkerEvent, error) {
+	childLogger.Debug().Msg("NewWorkerEventTX")
+
+	//trace
+	span := tracerProvider.Span(ctx, "adapter.event.NewWorkerEventTX")
+	defer span.End()
+
+	workerKafka, err := producerWorker.NewProducerWorkerTX(kafkaConfigurations)
+	if err != nil {
+		return nil, err
+	}
+
+	// Start Kafka InitTransactions
+	err = workerKafka.InitTransactions(ctx)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("failed to kafka InitTransactions")
+		return nil, err
+	}	
 
 	return &WorkerEvent{
 		Topics: topics,
