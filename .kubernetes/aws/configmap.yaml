@@ -44,7 +44,7 @@ data:
 
   NAME_SERVICE_03: "go-credit"
   URL_SERVICE_03: "https://vpce.global.dev.caradhras.io/pv/add"
-  METHOD_SERVICE_03: "POST
+  METHOD_SERVICE_03: "POST"
   X_APIGW_API_ID_SERVICE_03: "7egms7zn67"
 
   #SERVICE_URL_DOMAIN: "http://svc-go-account.test-a.svc.cluster.local:5000"
