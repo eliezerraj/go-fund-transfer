@@ -24,6 +24,7 @@ var(
 	databasePGServer go_core_pg.DatabasePGServer
 )
 
+// About initialize the enviroment var
 func init(){
 	log.Debug().Msg("init")
 	zerolog.SetGlobalLevel(logLevel)
@@ -43,6 +44,7 @@ func init(){
 	appServer.Topics = topics
 }
 
+// About main
 func main (){
 	log.Debug().Msg("----------------------------------------------------")
 	log.Debug().Msg("main")
@@ -83,9 +85,12 @@ func main (){
 		log.Error().Err(err).Msg("error open kafka")
 		panic(err)
 	}
-
+	
+	// wire
 	workerService := service.NewWorkerService(database, appServer.ApiService, workerEvent)
 	httpRouters := api.NewHttpRouters(workerService)
 	httpServer := server.NewHttpAppServer(appServer.Server)
+
+	// start server
 	httpServer.StartHttpAppServer(ctx, &httpRouters, &appServer)
 }

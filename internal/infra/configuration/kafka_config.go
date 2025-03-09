@@ -8,6 +8,7 @@ import(
 	go_core_event "github.com/eliezerraj/go-core/event/kafka" 
 )
 
+// About get kafka env var
 func GetKafkaEnv() (go_core_event.KafkaConfigurations, []string) {
 	childLogger.Debug().Msg("GetKafkaEnv")
 

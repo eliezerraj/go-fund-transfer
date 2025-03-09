@@ -30,6 +30,7 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 	}
 }
 
+// About create a uuid transaction
 func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, error){
 	childLogger.Debug().Msg("GetTransactionUUID")
 	
@@ -37,6 +38,7 @@ func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, erro
 	span := tracerProvider.Span(ctx, "database.GetTransactionUUID")
 	defer span.End()
 
+	// get DB connection
 	conn, err := w.DatabasePGServer.Acquire(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -66,6 +68,7 @@ func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, erro
 	return &uuid, nil
 }
 
+// About add a transfer transaction
 func (w WorkerRepository) AddTransfer(ctx context.Context, tx pgx.Tx, transfer *model.Transfer) (*model.Transfer, error){
 	childLogger.Debug().Msg("AddTransfer")
 	childLogger.Debug().Interface("transfer: ",transfer).Msg("")
@@ -107,6 +110,7 @@ func (w WorkerRepository) AddTransfer(ctx context.Context, tx pgx.Tx, transfer *
 	return transfer , nil
 }
 
+// About add transfer transaction
 func (w WorkerRepository) GetTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
 	childLogger.Debug().Msg("GetTransfer")
 
@@ -114,6 +118,7 @@ func (w WorkerRepository) GetTransfer(ctx context.Context, transfer *model.Trans
 	span := tracerProvider.Span(ctx, "database.GetTransfer")
 	defer span.End()
 
+	// get DB connection
 	conn, err := w.DatabasePGServer.Acquire(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())

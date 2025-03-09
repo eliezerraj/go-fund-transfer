@@ -19,7 +19,7 @@ type WorkerEvent struct {
 	WorkerKafka *go_core_event.ProducerWorker 
 }
 
-// No kafka transaction
+// About create a worker producer kafka
 func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *go_core_event.KafkaConfigurations) (*WorkerEvent, error) {
 	childLogger.Debug().Msg("NewWorkerEvent")
 
@@ -38,7 +38,7 @@ func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *g
 	},nil
 }
 
-// With Kafka Transactio
+// About create a worker producer kafka with transaction
 func NewWorkerEventTX(ctx context.Context, topics []string, kafkaConfigurations *go_core_event.KafkaConfigurations) (*WorkerEvent, error) {
 	childLogger.Debug().Msg("NewWorkerEventTX")
 

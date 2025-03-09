@@ -16,6 +16,7 @@ import(
 var tracerProvider go_core_observ.TracerProvider
 var apiService go_core_api.ApiService
 
+// About handle/conver the error from api call
 func errorStatusCode(statusCode int) error{
 	var err error
 	switch statusCode {
@@ -31,6 +32,7 @@ func errorStatusCode(statusCode int) error{
 	return err
 }
 
+// About add a transfer transaction via REST
 func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
 	childLogger.Debug().Msg("AddTransfer")
 	childLogger.Debug().Interface("transfer: ",transfer).Msg("")
@@ -154,6 +156,7 @@ func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer
 	return transfer, nil
 }
 
+// About get a transfer transaction
 func (s *WorkerService) GetTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
 	childLogger.Debug().Msg("GetTransfer")
 	childLogger.Debug().Interface("transfer: ", transfer).Msg("")
@@ -170,6 +173,7 @@ func (s *WorkerService) GetTransfer(ctx context.Context, transfer *model.Transfe
 	return res, nil
 }
 
+// About add a credit transfer transaction event
 func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
 	childLogger.Debug().Msg("CreditTransferEvent")
 	childLogger.Debug().Interface("transfer: ", transfer).Msg("")
@@ -281,6 +285,7 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 	return res_transfer, nil
 }
 
+// About add a debit transfer transaction event
 func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
 	childLogger.Debug().Msg("DebitTransferEvent")
 	childLogger.Debug().Interface("transfer: ", transfer).Msg("")
@@ -387,6 +392,7 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 	return res_transfer, nil
 }
 
+// About add a transfer transaction via event
 func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
 	childLogger.Debug().Msg("AddTransferEvent")
 	childLogger.Debug().Interface("transfer: ", transfer).Msg("")

@@ -7,6 +7,7 @@ import(
 	go_core_observ "github.com/eliezerraj/go-core/observability" 
 )
 
+// About get otel env var
 func GetOtelEnv() go_core_observ.ConfigOTEL {
 	childLogger.Debug().Msg("GetOtelEnv")
 

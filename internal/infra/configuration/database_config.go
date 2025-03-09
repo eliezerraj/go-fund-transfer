@@ -7,6 +7,7 @@ import(
 	go_core_pg "github.com/eliezerraj/go-core/database/pg"
 )
 
+// About get DB env var
 func GetDatabaseEnv() go_core_pg.DatabaseConfig {
 	childLogger.Debug().Msg("GetDatabaseEnv")
 

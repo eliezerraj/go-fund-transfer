@@ -30,6 +30,7 @@ func NewHttpRouters(workerService *service.WorkerService) HttpRouters {
 	}
 }
 
+// About return a health
 func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Health")
 
@@ -37,6 +38,7 @@ func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(rw).Encode(health)
 }
 
+// About return a live
 func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Live")
 
@@ -44,12 +46,14 @@ func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(rw).Encode(live)
 }
 
+// About show all header received
 func (h *HttpRouters) Header(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Header")
 	
 	json.NewEncoder(rw).Encode(req.Header)
 }
 
+// About get the transfer transaction
 func (h *HttpRouters) GetTransfer(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("GetTransfer")
 
@@ -83,6 +87,7 @@ func (h *HttpRouters) GetTransfer(rw http.ResponseWriter, req *http.Request) err
 	return core_json.WriteJSON(rw, http.StatusOK, res)
 }
 
+// About add transfer transaction
 func (h *HttpRouters) AddTransfer(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("AddTransfer")
 
@@ -115,6 +120,7 @@ func (h *HttpRouters) AddTransfer(rw http.ResponseWriter, req *http.Request) err
 	return core_json.WriteJSON(rw, http.StatusOK, res)
 }
 
+// About add transfer transaction via event
 func (h *HttpRouters) AddTransferEvent(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("AddTransferEvent")
 
@@ -147,6 +153,7 @@ func (h *HttpRouters) AddTransferEvent(rw http.ResponseWriter, req *http.Request
 	return core_json.WriteJSON(rw, http.StatusOK, res)
 }
 
+// About add credit transaction via event
 func (h *HttpRouters) CreditTransferEvent(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("CreditTransferEvent")
 
@@ -181,6 +188,7 @@ func (h *HttpRouters) CreditTransferEvent(rw http.ResponseWriter, req *http.Requ
 	return core_json.WriteJSON(rw, http.StatusOK, res)
 }
 
+// About add debit transaction via event
 func (h *HttpRouters) DebitTransferEvent(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("DebitTransferEvent")
 

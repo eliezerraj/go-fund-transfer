@@ -6,6 +6,7 @@ import(
 	"github.com/go-fund-transfer/internal/core/model"
 )
 
+// About get service´s endpoint env var
 func GetEndpointEnv() []model.ApiService {
 	childLogger.Debug().Msg("GetEndpointEnv")
 

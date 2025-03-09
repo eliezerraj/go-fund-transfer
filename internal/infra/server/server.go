@@ -37,6 +37,7 @@ func NewHttpAppServer(httpServer *model.Server) HttpServer {
 	return HttpServer{httpServer: httpServer }
 }
 
+// About start http server
 func (h HttpServer) StartHttpAppServer(	ctx context.Context, 
 										httpRouters *api.HttpRouters,
 										appServer *model.AppServer) {
@@ -112,6 +113,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	debitTransferEvent.HandleFunc("/debitTransferEvent", core_middleware.MiddleWareErrorHandler(httpRouters.DebitTransferEvent))		
 	debitTransferEvent.Use(otelmux.Middleware("go-fund-transfer"))
 
+	// setup http server
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpServer.Port),      	
 		Handler:      myRouter,                	          
@@ -122,6 +124,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 
 	childLogger.Info().Str("Service Port : ", strconv.Itoa(h.httpServer.Port)).Msg("Service Port")
 
+	// start http server
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil {
@@ -129,6 +132,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 		}
 	}()
 
+	// handle SIGTERM
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	<-ch
