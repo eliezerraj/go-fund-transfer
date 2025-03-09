@@ -37,7 +37,6 @@ func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer
 
 	//Trace
 	span := tracerProvider.Span(ctx, "service.AddTransfer")
-	defer span.End()
 
 	// Get the database connection
 	tx, conn, err := s.workerRepository.DatabasePGServer.StartTx(ctx)
@@ -266,12 +265,14 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 	}
 
 	// publish event credit
+	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
 	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[0], key, payload_bytes)
 	if err != nil {
 		return nil, err
 	}
+	defer childSpanKafka.End()
 
-	// Just for testing (breaking) the transaction and testing kafka	
+	// Just for testing (breaking) the transaction and testing kafka
 	if transfer.Currency == "USD" {
 		err =  erro.ErrCurrencyInvalid
 		return nil, err
@@ -376,10 +377,12 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 	}
 
 	// publish event debit
+	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
 	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[1], key, payload_bytes)
 	if err != nil {
 		return nil, err
 	}
+	defer childSpanKafka.End()
 
 	return res_transfer, nil
 }
@@ -505,10 +508,12 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 	}
 
 	// publish event transfer
+	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
 	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[2], key, payload_bytes)
 	if err != nil {
 		return nil, err
 	}
+	defer childSpanKafka.End()
 
 	return res_transfer, nil
 }
