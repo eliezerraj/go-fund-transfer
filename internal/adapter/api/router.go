@@ -99,7 +99,7 @@ func (h *HttpRouters) AddTransfer(rw http.ResponseWriter, req *http.Request) err
 	transfer := model.Transfer{}
 	err := json.NewDecoder(req.Body).Decode(&transfer)
     if err != nil {
-		core_apiError = core_apiError.NewAPIError(erro.ErrUnmarshal, http.StatusBadRequest)
+		core_apiError = core_apiError.NewAPIError(err, http.StatusBadRequest)
 		return &core_apiError
     }
 
@@ -132,7 +132,7 @@ func (h *HttpRouters) AddTransferEvent(rw http.ResponseWriter, req *http.Request
 	transfer := model.Transfer{}
 	err := json.NewDecoder(req.Body).Decode(&transfer)
     if err != nil {
-		core_apiError = core_apiError.NewAPIError(erro.ErrUnmarshal, http.StatusBadRequest)
+		core_apiError = core_apiError.NewAPIError(err, http.StatusBadRequest)
 		return &core_apiError
     }
 
@@ -165,7 +165,7 @@ func (h *HttpRouters) CreditTransferEvent(rw http.ResponseWriter, req *http.Requ
 	transfer := model.Transfer{}
 	err := json.NewDecoder(req.Body).Decode(&transfer)
     if err != nil {
-		core_apiError = core_apiError.NewAPIError(erro.ErrUnmarshal, http.StatusBadRequest)
+		core_apiError = core_apiError.NewAPIError(err, http.StatusBadRequest)
 		return &core_apiError
     }
 
@@ -200,7 +200,7 @@ func (h *HttpRouters) DebitTransferEvent(rw http.ResponseWriter, req *http.Reque
 	transfer := model.Transfer{}
 	err := json.NewDecoder(req.Body).Decode(&transfer)
     if err != nil {
-		core_apiError = core_apiError.NewAPIError(erro.ErrUnmarshal, http.StatusBadRequest)
+		core_apiError = core_apiError.NewAPIError(err, http.StatusBadRequest)
 		return &core_apiError
     }
 
