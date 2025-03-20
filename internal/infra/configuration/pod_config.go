@@ -5,7 +5,6 @@ import(
 	"strconv"
 	"net"
 	"context"
-	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -19,7 +18,7 @@ var childLogger = log.With().Str("infra", "configuration").Logger()
 
 // About get pod information env var
 func GetInfoPod() (	model.InfoPod, model.Server) {
-	childLogger.Debug().Msg("GetInfoPod")
+	childLogger.Info().Msg("GetInfoPod")
 
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -88,20 +87,4 @@ func GetInfoPod() (	model.InfoPod, model.Server) {
 	}
 
 	return infoPod, server
-}
-
-
-// Convert time string to time
-func ConvertToDate(date_str string) (*time.Time, error){
-	childLogger.Debug().Msg("ConvertToDate")
-
-	layout := "2006-01-02"
-
-	date, err := time.Parse(layout, date_str)
-	if err != nil {
-		log.Error().Err(err).Msg("error parsing date")
-		return nil, err
-	}
-
-	return &date, nil
 }

@@ -9,7 +9,7 @@ import(
 
 // About get DB env var
 func GetDatabaseEnv() go_core_pg.DatabaseConfig {
-	childLogger.Debug().Msg("GetDatabaseEnv")
+	childLogger.Info().Msg("GetDatabaseEnv")
 
 	err := godotenv.Load(".env")
 	if err != nil {

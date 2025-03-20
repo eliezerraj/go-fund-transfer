@@ -10,7 +10,7 @@ import(
 
 // About get kafka env var
 func GetKafkaEnv() (go_core_event.KafkaConfigurations, []string) {
-	childLogger.Debug().Msg("GetKafkaEnv")
+	childLogger.Info().Msg("GetKafkaEnv")
 
 	err := godotenv.Load(".env")
 	if err != nil {

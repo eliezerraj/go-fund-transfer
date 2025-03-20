@@ -1,7 +1,9 @@
 package service
 
 import(
+	"fmt"
 	"time"
+	"strconv"
 	"context"
 	"net/http"
 	"encoding/json"
@@ -34,11 +36,12 @@ func errorStatusCode(statusCode int) error{
 
 // About add a transfer transaction via REST
 func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Debug().Msg("AddTransfer")
-	childLogger.Debug().Interface("transfer: ",transfer).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddTransfer")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ",transfer).Msg("")
 
 	//Trace
 	span := tracerProvider.Span(ctx, "service.AddTransfer")
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
 
 	// Get the database connection
 	tx, conn, err := s.workerRepository.DatabasePGServer.StartTx(ctx)
@@ -91,7 +94,8 @@ func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer
 														s.apiService[0].Url + "/" + transfer.AccountFrom.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id, 
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -110,7 +114,8 @@ func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer
 														s.apiService[0].Url + "/" + transfer.AccountTo.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id, 
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -128,7 +133,8 @@ func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer
 											s.apiService[1].Url,
 											s.apiService[1].Method,
 											&s.apiService[1].Header_x_apigw_api_id,
-											nil, 
+											nil,
+											&trace_id, 
 											transfer.AccountFrom)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -139,7 +145,8 @@ func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer
 											s.apiService[2].Url,
 											s.apiService[2].Method,
 											&s.apiService[2].Header_x_apigw_api_id,
-											nil, 
+											nil,
+											&trace_id,
 											transfer.AccountTo)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -158,8 +165,8 @@ func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer
 
 // About get a transfer transaction
 func (s *WorkerService) GetTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Debug().Msg("GetTransfer")
-	childLogger.Debug().Interface("transfer: ", transfer).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTransfer")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ", transfer).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.GetTransfer")
@@ -175,11 +182,12 @@ func (s *WorkerService) GetTransfer(ctx context.Context, transfer *model.Transfe
 
 // About add a credit transfer transaction event
 func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Debug().Msg("CreditTransferEvent")
-	childLogger.Debug().Interface("transfer: ", transfer).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("CreditTransferEvent")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ", transfer).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.CreditTransferEvent")
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
 	defer span.End()
 
 	// Get the database connection
@@ -191,7 +199,7 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 	// Start Kafka transaction
 	err = s.workerEvent.WorkerKafka.BeginTransaction()
 	if err != nil {
-		childLogger.Error().Err(err).Msg("failed to kafka BeginTransaction")
+		childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("failed to kafka BeginTransaction")
 		return nil, err
 	}
 
@@ -201,13 +209,13 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 			childLogger.Debug().Msg("ROLLBACK !!!!")
 			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
 			if err != nil {
-				childLogger.Error().Err(err).Msg("Failed to Kafka AbortTransaction")
+				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka AbortTransaction")
 			}		
 			tx.Rollback(ctx)
 		} else {
 			err =  s.workerEvent.WorkerKafka.CommitTransaction(ctx)
 			if err != nil {
-				childLogger.Error().Err(err).Msg("Failed to Kafka CommitTransaction")
+				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka CommitTransaction")
 			}
 			tx.Commit(ctx)
 		}
@@ -226,7 +234,8 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 														s.apiService[0].Url + "/" + transfer.AccountFrom.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -262,7 +271,7 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 	}
 
 	// Prepare to event credit
-	key := string(res_transfer.ID)
+	key := strconv.Itoa(res_transfer.ID)
 	payload_bytes, err := json.Marshal(res_transfer)
 	if err != nil {
 		return nil, err
@@ -270,7 +279,7 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 
 	// publish event credit
 	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
-	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[0], key, payload_bytes)
+	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[0], key, trace_id, payload_bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -287,11 +296,12 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 
 // About add a debit transfer transaction event
 func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Debug().Msg("DebitTransferEvent")
-	childLogger.Debug().Interface("transfer: ", transfer).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("DebitTransferEvent")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ", transfer).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.DebitTransferEvent")
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
 	defer span.End()
 
 	// Get the database connection
@@ -303,7 +313,7 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 	// Start Kafka transaction
 	err = s.workerEvent.WorkerKafka.BeginTransaction()
 	if err != nil {
-		childLogger.Error().Err(err).Msg("failed to kafka BeginTransaction")
+		childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("failed to kafka BeginTransaction")
 		return nil, err
 	}
 
@@ -313,13 +323,13 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 			childLogger.Debug().Msg("ROLLBACK !!!!")
 			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
 			if err != nil {
-				childLogger.Error().Err(err).Msg("Failed to Kafka AbortTransaction")
+				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka AbortTransaction")
 			}		
 			tx.Rollback(ctx)
 		} else {
 			err =  s.workerEvent.WorkerKafka.CommitTransaction(ctx)
 			if err != nil {
-				childLogger.Error().Err(err).Msg("Failed to Kafka CommitTransaction")
+				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka CommitTransaction")
 			}
 			tx.Commit(ctx)
 		}
@@ -338,7 +348,8 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 														s.apiService[0].Url + "/" + transfer.AccountFrom.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -375,7 +386,7 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 	}
 
 	// Prepare to event debit
-	key := string(res_transfer.ID)
+	key := strconv.Itoa(res_transfer.ID)
 	payload_bytes, err := json.Marshal(res_transfer)
 	if err != nil {
 		return nil, err
@@ -383,7 +394,7 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 
 	// publish event debit
 	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
-	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[1], key, payload_bytes)
+	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[1], key, trace_id, payload_bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -394,11 +405,12 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 
 // About add a transfer transaction via event
 func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Debug().Msg("AddTransferEvent")
-	childLogger.Debug().Interface("transfer: ", transfer).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddTransferEvent")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ", transfer).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddTransferEvent")
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
 	defer span.End()
 
 	// Get the database connection
@@ -410,7 +422,7 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 	// Start Kafka transaction
 	err = s.workerEvent.WorkerKafka.BeginTransaction()
 	if err != nil {
-		childLogger.Error().Err(err).Msg("failed to kafka BeginTransaction")
+		childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("failed to kafka BeginTransaction")
 		return nil, err
 	}
 
@@ -420,13 +432,13 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 			childLogger.Debug().Msg("ROLLBACK !!!!")
 			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
 			if err != nil {
-				childLogger.Error().Err(err).Msg("Failed to Kafka AbortTransaction")
+				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka AbortTransaction")
 			}		
 			tx.Rollback(ctx)
 		} else {
 			err =  s.workerEvent.WorkerKafka.CommitTransaction(ctx)
 			if err != nil {
-				childLogger.Error().Err(err).Msg("Failed to Kafka CommitTransaction")
+				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka CommitTransaction")
 			}
 			tx.Commit(ctx)
 		}
@@ -468,7 +480,8 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 														s.apiService[0].Url + "/" + transfer.AccountFrom.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -487,7 +500,8 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 														s.apiService[0].Url + "/" + transfer.AccountTo.AccountID,
 														s.apiService[0].Method,
 														&s.apiService[0].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)
@@ -507,7 +521,7 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 	}
 
 	// Prepare to event transfer
-	key := string(res_transfer.ID)
+	key := strconv.Itoa(res_transfer.ID)
 	payload_bytes, err := json.Marshal(transfer)
 	if err != nil {
 		return nil, err
@@ -515,7 +529,7 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 
 	// publish event transfer
 	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
-	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[2], key, payload_bytes)
+	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[2], key, trace_id, payload_bytes)
 	if err != nil {
 		return nil, err
 	}

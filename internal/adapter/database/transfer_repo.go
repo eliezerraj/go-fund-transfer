@@ -23,7 +23,7 @@ type WorkerRepository struct {
 }
 
 func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerRepository{
-	childLogger.Debug().Msg("NewWorkerRepository")
+	childLogger.Info().Msg("NewWorkerRepository")
 
 	return &WorkerRepository{
 		DatabasePGServer: databasePGServer,
@@ -32,7 +32,7 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 
 // About create a uuid transaction
 func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, error){
-	childLogger.Debug().Msg("GetTransactionUUID")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTransactionUUID")
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetTransactionUUID")
@@ -70,8 +70,8 @@ func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, erro
 
 // About add a transfer transaction
 func (w WorkerRepository) AddTransfer(ctx context.Context, tx pgx.Tx, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Debug().Msg("AddTransfer")
-	childLogger.Debug().Interface("transfer: ",transfer).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddTransfer")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ",transfer).Msg("")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.AddTransfer")
@@ -112,7 +112,7 @@ func (w WorkerRepository) AddTransfer(ctx context.Context, tx pgx.Tx, transfer *
 
 // About add transfer transaction
 func (w WorkerRepository) GetTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Debug().Msg("GetTransfer")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTransfer")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetTransfer")

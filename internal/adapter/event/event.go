@@ -21,7 +21,7 @@ type WorkerEvent struct {
 
 // About create a worker producer kafka
 func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *go_core_event.KafkaConfigurations) (*WorkerEvent, error) {
-	childLogger.Debug().Msg("NewWorkerEvent")
+	childLogger.Info().Msg("NewWorkerEvent")
 
 	//trace
 	span := tracerProvider.Span(ctx, "adapter.event.NewWorkerEvent")
@@ -40,7 +40,7 @@ func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *g
 
 // About create a worker producer kafka with transaction
 func NewWorkerEventTX(ctx context.Context, topics []string, kafkaConfigurations *go_core_event.KafkaConfigurations) (*WorkerEvent, error) {
-	childLogger.Debug().Msg("NewWorkerEventTX")
+	childLogger.Info().Msg("NewWorkerEventTX")
 
 	//trace
 	span := tracerProvider.Span(ctx, "adapter.event.NewWorkerEventTX")
