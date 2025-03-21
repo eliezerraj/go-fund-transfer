@@ -188,7 +188,6 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 	// Trace
 	span := tracerProvider.Span(ctx, "service.CreditTransferEvent")
 	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
-	defer span.End()
 
 	// Get the database connection
 	tx, conn, err := s.workerRepository.DatabasePGServer.StartTx(ctx)
@@ -199,23 +198,23 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 	// Start Kafka transaction
 	err = s.workerEvent.WorkerKafka.BeginTransaction()
 	if err != nil {
-		childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("failed to kafka BeginTransaction")
+		childLogger.Error().Interface("trace-resquest-id", trace_id ).Err(err).Msg("failed to kafka BeginTransaction")
 		return nil, err
 	}
 
 	// Handle the transaction
 	defer func() {
 		if err != nil {
-			childLogger.Debug().Msg("ROLLBACK !!!!")
+			childLogger.Info().Interface("trace-resquest-id", trace_id ).Msg("ROLLBACK !!!!")
 			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
 			if err != nil {
-				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka AbortTransaction")
+				childLogger.Error().Interface("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka AbortTransaction")
 			}		
 			tx.Rollback(ctx)
 		} else {
 			err =  s.workerEvent.WorkerKafka.CommitTransaction(ctx)
 			if err != nil {
-				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka CommitTransaction")
+				childLogger.Error().Interface("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka CommitTransaction")
 			}
 			tx.Commit(ctx)
 		}
@@ -279,7 +278,7 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 
 	// publish event credit
 	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
-	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[0], key, trace_id, payload_bytes)
+	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[0], key, &trace_id, payload_bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +301,6 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 	// Trace
 	span := tracerProvider.Span(ctx, "service.DebitTransferEvent")
 	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
-	defer span.End()
 
 	// Get the database connection
 	tx, conn, err := s.workerRepository.DatabasePGServer.StartTx(ctx)
@@ -320,7 +318,7 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 	// Handle the transaction
 	defer func() {
 		if err != nil {
-			childLogger.Debug().Msg("ROLLBACK !!!!")
+			childLogger.Info().Str("trace-resquest-id", trace_id ).Msg("ROLLBACK !!!!")
 			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
 			if err != nil {
 				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka AbortTransaction")
@@ -394,7 +392,7 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 
 	// publish event debit
 	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
-	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[1], key, trace_id, payload_bytes)
+	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[1], key, &trace_id, payload_bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -429,7 +427,7 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 	// Handle the transaction
 	defer func() {
 		if err != nil {
-			childLogger.Debug().Msg("ROLLBACK !!!!")
+			childLogger.Info().Str("trace-resquest-id", trace_id ).Msg("ROLLBACK !!!!")
 			err :=  s.workerEvent.WorkerKafka.AbortTransaction(ctx)
 			if err != nil {
 				childLogger.Error().Str("trace-resquest-id", trace_id ).Err(err).Msg("Failed to Kafka AbortTransaction")
@@ -529,7 +527,7 @@ func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Tr
 
 	// publish event transfer
 	childSpanKafka := tracerProvider.Span(ctx, "workerKafka.Producer")
-	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[2], key, trace_id, payload_bytes)
+	err = s.workerEvent.WorkerKafka.Producer(ctx, s.workerEvent.Topics[2], key, &trace_id, payload_bytes)
 	if err != nil {
 		return nil, err
 	}
