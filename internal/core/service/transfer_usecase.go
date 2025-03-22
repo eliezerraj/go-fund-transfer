@@ -36,8 +36,7 @@ func errorStatusCode(statusCode int) error{
 
 // About add a transfer transaction via REST
 func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddTransfer")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ",transfer).Msg("")
+	childLogger.Info().Str("func","AddTransfer").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer", transfer).Send()
 
 	//Trace
 	span := tracerProvider.Span(ctx, "service.AddTransfer")
@@ -165,8 +164,7 @@ func (s WorkerService) AddTransfer(ctx context.Context, transfer *model.Transfer
 
 // About get a transfer transaction
 func (s *WorkerService) GetTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTransfer")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ", transfer).Msg("")
+	childLogger.Info().Str("func","GetTransfer").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer", transfer).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.GetTransfer")
@@ -182,8 +180,7 @@ func (s *WorkerService) GetTransfer(ctx context.Context, transfer *model.Transfe
 
 // About add a credit transfer transaction event
 func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("CreditTransferEvent")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ", transfer).Msg("")
+	childLogger.Info().Str("func","CreditTransferEvent").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer", transfer).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.CreditTransferEvent")
@@ -295,8 +292,7 @@ func (s *WorkerService) CreditTransferEvent(ctx context.Context, transfer *model
 
 // About add a debit transfer transaction event
 func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("DebitTransferEvent")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ", transfer).Msg("")
+	childLogger.Info().Str("func","DebitTransferEvent").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer", transfer).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.DebitTransferEvent")
@@ -403,8 +399,7 @@ func (s *WorkerService) DebitTransferEvent(ctx context.Context, transfer *model.
 
 // About add a transfer transaction via event
 func (s *WorkerService) AddTransferEvent(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddTransferEvent")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ", transfer).Msg("")
+	childLogger.Info().Str("func","AddTransferEvent").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer", transfer).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddTransferEvent")

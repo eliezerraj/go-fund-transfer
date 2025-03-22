@@ -8,11 +8,11 @@ import(
 
 // About get service´s endpoint env var
 func GetEndpointEnv() []model.ApiService {
-	childLogger.Info().Msg("GetEndpointEnv")
+	childLogger.Info().Str("func","GetEndpointEnv").Send()
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("env file not found !!!")
+		childLogger.Info().Err(err).Send()
 	}
 	
 	var apiService []model.ApiService

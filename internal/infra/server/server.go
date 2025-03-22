@@ -24,7 +24,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
 
-var childLogger = log.With().Str("handler", "api").Logger()
+var childLogger = log.With().Str("component","go-fund-transfer").Str("package","internal.infra.server").Logger()
+
 var core_middleware middleware.ToolsMiddleware
 var tracerProvider go_core_observ.TracerProvider
 var infoTrace go_core_observ.InfoTrace
@@ -34,6 +35,8 @@ type HttpServer struct {
 }
 
 func NewHttpAppServer(httpServer *model.Server) HttpServer {
+	childLogger.Info().Str("func","NewHttpAppServer").Send()
+
 	return HttpServer{httpServer: httpServer }
 }
 
@@ -41,11 +44,9 @@ func NewHttpAppServer(httpServer *model.Server) HttpServer {
 func (h HttpServer) StartHttpAppServer(	ctx context.Context, 
 										httpRouters *api.HttpRouters,
 										appServer *model.AppServer) {
-	childLogger.Info().Msg("StartHttpAppServer")
+	childLogger.Info().Str("func","StartHttpAppServer").Send()
 			
-	// otel
-	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", appServer.ConfigOTEL.OtelExportEndpoint).Msg("")
-	
+	// otel	
 	infoTrace.PodName = appServer.InfoPod.PodName
 	infoTrace.PodVersion = appServer.InfoPod.ApiVersion
 	infoTrace.ServiceType = "k8-workload"
@@ -64,7 +65,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	defer func() { 
 		err := tp.Shutdown(ctx)
 		if err != nil{
-			childLogger.Error().Err(err).Msg("error closing OTEL tracer !!!")
+			childLogger.Error().Err(err).Send()
 		}
 		childLogger.Info().Msg("stop done !!!")
 	}()
@@ -74,7 +75,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	myRouter.Use(core_middleware.MiddleWareHandlerHeader)
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		childLogger.Info().Msg("/")
+		childLogger.Info().Str("HandleFunc","/").Send()
 		
 		json.NewEncoder(rw).Encode(appServer)
 	})
@@ -89,7 +90,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
     header.HandleFunc("/header", httpRouters.Header)
 
 	myRouter.HandleFunc("/info", func(rw http.ResponseWriter, req *http.Request) {
-		childLogger.Info().Msg("/info")
+		childLogger.Info().Str("HandleFunc","/info").Send()
 
 		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(appServer)
@@ -124,7 +125,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 		IdleTimeout:  time.Duration(h.httpServer.IdleTimeout) * time.Second, 
 	}
 
-	childLogger.Info().Str("Service Port : ", strconv.Itoa(h.httpServer.Port)).Msg("Service Port")
+	childLogger.Info().Str("Service Port", strconv.Itoa(h.httpServer.Port)).Send()
 
 	// start http server
 	go func() {

@@ -14,15 +14,15 @@ import(
 	"github.com/go-fund-transfer/internal/core/model"
 )
 
-var childLogger = log.With().Str("infra", "configuration").Logger()
+var childLogger = log.With().Str("component","go-fund-transfer").Str("package","internal.infra.configuration").Logger()
 
 // About get pod information env var
 func GetInfoPod() (	model.InfoPod, model.Server) {
-	childLogger.Info().Msg("GetInfoPod")
+	childLogger.Info().Str("func","GetInfoPod").Send()
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("env file not found !!!")
+		childLogger.Info().Err(err).Send()
 	}
 
 	var infoPod 	model.InfoPod
@@ -67,13 +67,13 @@ func GetInfoPod() (	model.InfoPod, model.Server) {
 	if (infoPod.IsAZ) {
 		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
-			childLogger.Error().Err(err).Msg("fatal error get Context")
+			childLogger.Error().Err(err).Send()
 			os.Exit(3)
 		}
 		client := imds.NewFromConfig(cfg)
 		response, err := client.GetInstanceIdentityDocument(context.TODO(), &imds.GetInstanceIdentityDocumentInput{})
 		if err != nil {
-			childLogger.Error().Err(err).Msg("unable to retrieve the region from the EC2 instance")
+			childLogger.Error().Err(err).Send()
 			os.Exit(3)
 		}
 		infoPod.AvailabilityZone = response.AvailabilityZone	

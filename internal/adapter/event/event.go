@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var childLogger = log.With().Str("adapter", "event").Logger()
+var childLogger = log.With().Str("component","go-fund-transfer").Str("package","internal.adapter.event").Logger()
 
 var tracerProvider go_core_observ.TracerProvider
 var producerWorker go_core_event.ProducerWorker
@@ -21,7 +21,7 @@ type WorkerEvent struct {
 
 // About create a worker producer kafka
 func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *go_core_event.KafkaConfigurations) (*WorkerEvent, error) {
-	childLogger.Info().Msg("NewWorkerEvent")
+	childLogger.Info().Str("func","NewWorkerEvent").Send()
 
 	//trace
 	span := tracerProvider.Span(ctx, "adapter.event.NewWorkerEvent")
@@ -29,6 +29,7 @@ func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *g
 
 	workerKafka, err := producerWorker.NewProducerWorker(kafkaConfigurations)
 	if err != nil {
+		childLogger.Error().Err(err).Send()
 		return nil, err
 	}
 
@@ -40,7 +41,7 @@ func NewWorkerEvent(ctx context.Context, topics []string, kafkaConfigurations *g
 
 // About create a worker producer kafka with transaction
 func NewWorkerEventTX(ctx context.Context, topics []string, kafkaConfigurations *go_core_event.KafkaConfigurations) (*WorkerEvent, error) {
-	childLogger.Info().Msg("NewWorkerEventTX")
+	childLogger.Info().Str("func","NewWorkerEventTX").Send()
 
 	//trace
 	span := tracerProvider.Span(ctx, "adapter.event.NewWorkerEventTX")
@@ -54,7 +55,7 @@ func NewWorkerEventTX(ctx context.Context, topics []string, kafkaConfigurations 
 	// Start Kafka InitTransactions
 	err = workerKafka.InitTransactions(ctx)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("failed to kafka InitTransactions")
+		childLogger.Error().Err(err).Send()
 		return nil, err
 	}	
 

@@ -22,11 +22,13 @@ var(
 	appServer	model.AppServer
 	databaseConfig go_core_pg.DatabaseConfig
 	databasePGServer go_core_pg.DatabasePGServer
+	childLogger = log.With().Str("component","go-fund-transfer").Str("package", "main").Logger()
 )
 
 // About initialize the enviroment var
 func init(){
-	log.Info().Msg("init")
+	childLogger.Info().Str("func","init").Send()
+
 	zerolog.SetGlobalLevel(logLevel)
 
 	infoPod, server := configuration.GetInfoPod()
@@ -46,11 +48,7 @@ func init(){
 
 // About main
 func main (){
-	log.Info().Msg("----------------------------------------------------")
-	log.Info().Msg("main")
-	log.Info().Msg("----------------------------------------------------")
-	log.Info().Interface("appServer :",appServer).Msg("")
-	log.Info().Msg("----------------------------------------------------")
+	childLogger.Info().Str("func","main").Interface("appServer :",appServer).Send()
 
 	ctx, cancel := context.WithTimeout(	context.Background(), 
 										time.Duration( appServer.Server.ReadTimeout ) * time.Second)
@@ -63,9 +61,9 @@ func main (){
 		databasePGServer, err = databasePGServer.NewDatabasePGServer(ctx, *appServer.DatabaseConfig)
 		if err != nil {
 			if count < 3 {
-				log.Error().Err(err).Msg("error open database... trying again !!")
+				childLogger.Error().Err(err).Msg("error open database... trying again !!")
 			} else {
-				log.Error().Err(err).Msg("fatal error open Database aborting")
+				childLogger.Error().Err(err).Msg("fatal error open Database aborting")
 				panic(err)
 			}
 			time.Sleep(3 * time.Second) //backoff
@@ -81,7 +79,7 @@ func main (){
 	// Kafka
 	workerEvent, err := event.NewWorkerEventTX(ctx, appServer.Topics, appServer.KafkaConfigurations)
 	if err != nil {
-		log.Error().Err(err).Msg("error open kafka")
+		childLogger.Error().Err(err).Send()
 		panic(err)
 	}
 	

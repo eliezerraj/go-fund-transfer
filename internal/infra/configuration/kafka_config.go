@@ -10,11 +10,11 @@ import(
 
 // About get kafka env var
 func GetKafkaEnv() (go_core_event.KafkaConfigurations, []string) {
-	childLogger.Info().Msg("GetKafkaEnv")
+	childLogger.Info().Str("func","GetKafkaEnv").Send()
 
 	err := godotenv.Load(".env")
 	if err != nil {
-		childLogger.Info().Err(err).Msg("env file not found !!!")
+		childLogger.Info().Send()
 	}
 
 	var kafkaConfigurations go_core_event.KafkaConfigurations

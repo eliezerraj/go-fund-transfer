@@ -15,15 +15,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var childLogger = log.With().Str("component","go-fund-transfer").Str("package","internal.adapter.database").Logger()
 var tracerProvider go_core_observ.TracerProvider
-var childLogger = log.With().Str("adapter", "database").Logger()
 
 type WorkerRepository struct {
 	DatabasePGServer *go_core_pg.DatabasePGServer
 }
 
 func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerRepository{
-	childLogger.Info().Msg("NewWorkerRepository")
+	childLogger.Info().Str("func","NewWorkerRepository").Send()
 
 	return &WorkerRepository{
 		DatabasePGServer: databasePGServer,
@@ -32,7 +32,7 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 
 // About create a uuid transaction
 func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTransactionUUID")
+	childLogger.Info().Str("func","GetTransactionUUID").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetTransactionUUID")
@@ -70,8 +70,7 @@ func (w WorkerRepository) GetTransactionUUID(ctx context.Context) (*string, erro
 
 // About add a transfer transaction
 func (w WorkerRepository) AddTransfer(ctx context.Context, tx pgx.Tx, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddTransfer")
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer: ",transfer).Msg("")
+	childLogger.Info().Str("func","AddTransfer").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("transfer",transfer).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.AddTransfer")
@@ -112,7 +111,7 @@ func (w WorkerRepository) AddTransfer(ctx context.Context, tx pgx.Tx, transfer *
 
 // About add transfer transaction
 func (w WorkerRepository) GetTransfer(ctx context.Context, transfer *model.Transfer) (*model.Transfer, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTransfer")
+	childLogger.Info().Str("func","GetTransfer").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetTransfer")

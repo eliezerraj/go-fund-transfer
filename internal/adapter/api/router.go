@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var childLogger = log.With().Str("adapter", "api.router").Logger()
+var childLogger = log.With().Str("component", "go-fund-transfer").Str("package", "internal.adapter.api").Logger()
 
 var core_json coreJson.CoreJson
 var core_apiError coreJson.APIError
@@ -25,6 +25,7 @@ type HttpRouters struct {
 }
 
 func NewHttpRouters(workerService *service.WorkerService) HttpRouters {
+	childLogger.Info().Str("func","NewHttpRouters").Send()
 	return HttpRouters{
 		workerService: workerService,
 	}
@@ -32,7 +33,7 @@ func NewHttpRouters(workerService *service.WorkerService) HttpRouters {
 
 // About return a health
 func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Health")
+	childLogger.Info().Str("func","Health").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	health := true
 	json.NewEncoder(rw).Encode(health)
@@ -40,7 +41,7 @@ func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
 
 // About return a live
 func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Live")
+	childLogger.Info().Str("func","Live").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	live := true
 	json.NewEncoder(rw).Encode(live)
@@ -48,14 +49,14 @@ func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
 
 // About show all header received
 func (h *HttpRouters) Header(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Header")
+	childLogger.Info().Str("func","Header").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()	
 	
 	json.NewEncoder(rw).Encode(req.Header)
 }
 
 // About get the transfer transaction
 func (h *HttpRouters) GetTransfer(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("GetTransfer")
+	childLogger.Info().Str("func","GetTransfer").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.GetTransfer")
@@ -89,7 +90,7 @@ func (h *HttpRouters) GetTransfer(rw http.ResponseWriter, req *http.Request) err
 
 // About add transfer transaction
 func (h *HttpRouters) AddTransfer(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("AddTransfer")
+	childLogger.Info().Str("func","AddTransfer").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.AddTransfer")
@@ -122,7 +123,7 @@ func (h *HttpRouters) AddTransfer(rw http.ResponseWriter, req *http.Request) err
 
 // About add transfer transaction via event
 func (h *HttpRouters) AddTransferEvent(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("AddTransferEvent")
+	childLogger.Info().Str("func","AddTransferEvent").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.AddTransferEvent")
@@ -155,7 +156,7 @@ func (h *HttpRouters) AddTransferEvent(rw http.ResponseWriter, req *http.Request
 
 // About add credit transaction via event
 func (h *HttpRouters) CreditTransferEvent(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("CreditTransferEvent")
+	childLogger.Info().Str("func","CreditTransferEvent").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.CreditTransferEvent")
@@ -190,7 +191,7 @@ func (h *HttpRouters) CreditTransferEvent(rw http.ResponseWriter, req *http.Requ
 
 // About add debit transaction via event
 func (h *HttpRouters) DebitTransferEvent(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("DebitTransferEvent")
+	childLogger.Info().Str("func","DebitTransferEvent").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.DebitTransferEvent")
