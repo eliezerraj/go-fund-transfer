@@ -43,6 +43,10 @@ type ApiService struct {
 	Header_x_apigw_api_id	string `json:"x-apigw-api-id"`
 }
 
+type MessageRouter struct {
+	Message			string `json:"message"`
+}
+
 type Transfer struct {
 	ID				int			`json:"id,omitempty"`
 	AccountFrom		*AccountStatement	`json:"account_from,omitempty"`

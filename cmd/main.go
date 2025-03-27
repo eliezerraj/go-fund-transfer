@@ -48,7 +48,7 @@ func init(){
 
 // About main
 func main (){
-	childLogger.Info().Str("func","main").Interface("appServer :",appServer).Send()
+	childLogger.Info().Str("func","main").Interface("appServer",appServer).Send()
 
 	ctx, cancel := context.WithTimeout(	context.Background(), 
 										time.Duration( appServer.Server.ReadTimeout ) * time.Second)

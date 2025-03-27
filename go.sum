@@ -98,8 +98,8 @@ github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203 h1:XBBHcIb256gUJtLmY22n99HaZTz+r2Z51xUPi01m3wg=
 github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203/go.mod h1:E1jcSv8FaEny+OP/5k9UxZVw9YFWGj7eI4KR/iOBqCg=
-github.com/eliezerraj/go-core v1.0.52 h1:R+PJpz2POQHjWlTdO3kW7LYBDYkD5QgbH4sLlzU8YyI=
-github.com/eliezerraj/go-core v1.0.52/go.mod h1:gofQOkLQBlD7Sqs5t0xv2dBSbOjZHyEqa0Az90aR7Fw=
+github.com/eliezerraj/go-core v1.0.54 h1:egn31shLCEYxMGvLmWkNVp51GYpr09eBlmTpFoc0grs=
+github.com/eliezerraj/go-core v1.0.54/go.mod h1:gofQOkLQBlD7Sqs5t0xv2dBSbOjZHyEqa0Az90aR7Fw=
 github.com/emicklei/go-restful/v3 v3.11.0 h1:rAQeMHw1c7zTmncogyy8VvRZwtkmkZ4FxERmMY4rD+g=
 github.com/emicklei/go-restful/v3 v3.11.0/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
 github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
